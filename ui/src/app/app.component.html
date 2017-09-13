@@ -1,0 +1,18 @@
+<md-toolbar color="primary">
+  <button md-icon-button (click)="sidenav.toggle()">
+    <md-icon>menu</md-icon>
+  </button>
+  <span class="title">Vamp Lifter</span>
+  <span class="fill-remaining-space"></span>
+</md-toolbar>
+
+<md-sidenav-container>
+  <md-sidenav #sidenav class="sidenav" mode="side" opened="true">
+  </md-sidenav>
+
+  <div class="content">
+    <h1>
+      Welcome to {{title}}!
+    </h1>
+  </div>
+</md-sidenav-container>

@@ -1,0 +1,25 @@
+md-sidenav-container {
+  margin: 0;
+  width: 100%;
+  height: calc(100% - 64px);
+}
+
+.title {
+  padding-left: 10px;
+}
+
+.content {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidenav {
+  padding: 20px;
+  width: 280px;
+}
+
+.fill-remaining-space {
+  flex: 1 1 auto;
+}
