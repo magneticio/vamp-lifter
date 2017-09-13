@@ -32,7 +32,7 @@ object Lifter extends App {
              |""".stripMargin
       } :+
       new ConfigurationBootstrap :+
-      new ActorBootstrap(new PersistenceBootstrap :: new PulseBootstrap :: new LifterBootstrap :: Nil)
+      new ActorBootstrap(new PersistenceBootstrap :: new PulseBootstrap :: new LifterBootstrap :: new HttpApiBootstrap :: Nil)
   }
 
   sys.addShutdownHook {
