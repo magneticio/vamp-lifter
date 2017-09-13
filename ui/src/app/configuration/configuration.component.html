@@ -1,0 +1,10 @@
+<ace-editor
+  [(text)]="text"
+  [mode]="'yaml'"
+  [theme]="'clouds_midnight'"
+  [options]="options"
+  [readOnly]="false"
+  [autoUpdateContent]="true"
+  [durationBeforeCallback]="200"
+  (textChanged)="onChange($event)"
+  class="ace-editor"></ace-editor>

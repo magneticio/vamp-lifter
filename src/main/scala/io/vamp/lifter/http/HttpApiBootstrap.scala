@@ -1,15 +1,15 @@
-package io.vamp.lifter
+package io.vamp.lifter.http
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Route
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.{ ActorMaterializer, Materializer }
 import akka.util.Timeout
 import io.vamp.common.akka.ActorBootstrap
-import io.vamp.common.{Config, Namespace}
+import io.vamp.common.{ Config, Namespace }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class HttpApiBootstrap extends ActorBootstrap {
 

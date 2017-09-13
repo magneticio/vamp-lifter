@@ -1,4 +1,4 @@
-package io.vamp.lifter
+package io.vamp.lifter.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpEntity
@@ -6,10 +6,12 @@ import akka.http.scaladsl.model.StatusCodes.NotFound
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import akka.util.Timeout
-import io.vamp.common.{Config, Namespace}
+import io.vamp.common.{ Config, Namespace }
 import io.vamp.http_api.AbstractHttpApiRoute
 
-class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespace, val materializer: Materializer) extends AbstractHttpApiRoute {
+class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespace, val materializer: Materializer)
+    extends AbstractHttpApiRoute
+    with ConfigurationRoute {
 
   private lazy val index = Config.string("vamp.lifter.http-api.ui.index")()
   private lazy val directory = Config.string("vamp.lifter.http-api.ui.directory")()
@@ -30,9 +32,11 @@ class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespa
   private lazy val apiRoutes: Route = {
     noCachingAllowed {
       cors() {
-        pathPrefix("configuration") {
+        pathPrefix("api") {
           encodeResponse {
-            notFound
+            decodeRequest {
+              configurationRoutes
+            }
           }
         }
       }

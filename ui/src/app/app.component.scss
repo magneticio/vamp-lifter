@@ -9,17 +9,14 @@ md-sidenav-container {
 }
 
 .content {
-  display: flex;
   height: 100%;
-  align-items: center;
-  justify-content: center;
 }
 
-.sidenav {
-  padding: 20px;
+.side-nav {
   width: 280px;
 }
 
-.fill-remaining-space {
-  flex: 1 1 auto;
+.navigation-link > md-icon, span {
+  vertical-align: middle;
+  margin: 0 5px;
 }

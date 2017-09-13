@@ -1,0 +1,14 @@
+.progress {
+  width: 100%;
+  position: absolute;
+  top: 59px;
+  left: 0;
+  visibility: hidden;
+  &.show-progress {
+    visibility: visible;
+  }
+}
+
+.filler {
+  flex: 1 1 auto;
+}

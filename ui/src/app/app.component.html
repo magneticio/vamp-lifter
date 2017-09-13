@@ -1,18 +1,32 @@
-<md-toolbar color="primary">
-  <button md-icon-button (click)="sidenav.toggle()">
-    <md-icon>menu</md-icon>
-  </button>
-  <span class="title">Vamp Lifter</span>
-  <span class="fill-remaining-space"></span>
-</md-toolbar>
+<app-toolbar (onMenu)="sidenav.toggle()"></app-toolbar>
 
 <md-sidenav-container>
-  <md-sidenav #sidenav class="sidenav" mode="side" opened="true">
+  <md-sidenav #sidenav class="side-nav" mode="side" opened="true">
+
+    <md-nav-list>
+      <md-list-item>
+        <a md-line routerLink="/configuration" class="navigation-link">
+          <md-icon>settings</md-icon>
+          <span>Configuration</span>
+        </a>
+      </md-list-item>
+      <md-list-item>
+        <a md-line routerLink="/connections" class="navigation-link">
+          <md-icon>cloud</md-icon>
+          <span>Connections</span>
+        </a>
+      </md-list-item>
+      <md-list-item>
+        <a md-line routerLink="/initialization" class="navigation-link">
+          <md-icon>trending_up</md-icon>
+          <span>Initialization</span>
+        </a>
+      </md-list-item>
+    </md-nav-list>
+
   </md-sidenav>
 
   <div class="content">
-    <h1>
-      Welcome to {{title}}!
-    </h1>
+    <router-outlet></router-outlet>
   </div>
 </md-sidenav-container>
