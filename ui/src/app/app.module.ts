@@ -3,7 +3,7 @@ import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {
-  MdButtonModule, MdDialogModule, MdIconModule, MdListModule, MdProgressBarModule, MdSidenavModule,
+  MdButtonModule, MdDialogModule, MdIconModule, MdListModule, MdProgressBarModule, MdSidenavModule, MdSnackBarModule,
   MdToolbarModule, MdTooltipModule
 } from '@angular/material';
 
@@ -46,7 +46,8 @@ const routes: Routes = [
     MdListModule,
     MdProgressBarModule,
     MdTooltipModule,
-    MdDialogModule
+    MdDialogModule,
+    MdSnackBarModule
   ],
   providers: [LifterService, ToolbarService],
   bootstrap: [AppComponent],

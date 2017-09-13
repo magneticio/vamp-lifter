@@ -1,7 +1,13 @@
+
 .ace-editor {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  min-height: calc(100% - 30px);
   width: 100%;
   overflow: auto;
+}
+
+.footer {
+  height: 20px;
+  padding: 5px;
 }

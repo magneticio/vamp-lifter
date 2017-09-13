@@ -6,6 +6,8 @@ import com.typesafe.config.ConfigFactory
 import io.vamp.bootstrap.{ ActorBootstrap, ConfigurationBootstrap, LoggingBootstrap }
 import io.vamp.common.Namespace
 import io.vamp.lifter.http.HttpApiBootstrap
+import io.vamp.persistence.PersistenceBootstrap
+import io.vamp.pulse.PulseBootstrap
 
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS }
 
@@ -31,7 +33,7 @@ object Lifter extends App {
              |""".stripMargin
       } :+
       new ConfigurationBootstrap :+
-      new ActorBootstrap( /* new PersistenceBootstrap :: new PulseBootstrap :: */ new HttpApiBootstrap :: Nil)
+      new ActorBootstrap(new PersistenceBootstrap :: new PulseBootstrap :: new HttpApiBootstrap :: Nil)
   }
 
   sys.addShutdownHook {

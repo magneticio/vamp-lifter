@@ -1,10 +1,11 @@
-<ace-editor
-  [(text)]="text"
+<ace-editor   [(text)]="text"
   [mode]="'yaml'"
   [theme]="'clouds_midnight'"
   [options]="options"
   [readOnly]="false"
   [autoUpdateContent]="true"
   [durationBeforeCallback]="200"
-  (textChanged)="onChange($event)"
+  (textChanged)="onChange()"
   class="ace-editor"></ace-editor>
+
+<div class="footer">{{ footer }}</div>

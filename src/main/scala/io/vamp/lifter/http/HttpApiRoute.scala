@@ -8,16 +8,19 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import io.vamp.common.{ Config, Namespace }
 import io.vamp.http_api.AbstractHttpApiRoute
+import io.vamp.lifter.notification.LifterNotificationProvider
 
 class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespace, val materializer: Materializer)
     extends AbstractHttpApiRoute
-    with ConfigurationRoute {
+    with ConfigurationRoute
+    with LifterNotificationProvider {
+
+  implicit val timeout: Timeout = Config.timeout("vamp.lifter.http-api.response-timeout")()
 
   private lazy val index = Config.string("vamp.lifter.http-api.ui.index")()
   private lazy val directory = Config.string("vamp.lifter.http-api.ui.directory")()
 
   lazy val routes: Route = {
-    implicit val timeout: Timeout = Config.timeout("vamp.lifter.http-api.response-timeout")()
     log {
       handleExceptions(exceptionHandler) {
         handleRejections(rejectionHandler) {

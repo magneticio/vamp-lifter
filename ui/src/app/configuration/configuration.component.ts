@@ -1,7 +1,7 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {LifterService} from "../lifter.service";
 import {ToolbarAction, ToolbarService} from "../toolbar/toolbar.service";
-import {MD_DIALOG_DATA, MdDialog, MdDialogRef} from "@angular/material";
+import {MD_DIALOG_DATA, MdDialog, MdDialogRef, MdSnackBar, MdSnackBarConfig} from "@angular/material";
 
 @Component({
   selector: 'app-configuration',
@@ -12,23 +12,29 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
 
   text: string = '';
   options: any = {maxLines: 1000, printMargin: false};
+  footer: string = '';
 
   constructor(private lifter: LifterService,
               private toolbar: ToolbarService,
-              private dialog: MdDialog) {
+              private dialog: MdDialog,
+              private snackBar: MdSnackBar) {
   }
 
   ngOnInit() {
-    this.lifter.getConfiguration(false).subscribe((text) => this.text = text);
+    this.lifter.getConfiguration(false, false).subscribe((text) => this.text = text);
     this.toolbar.actions.next([
       new ToolbarAction(this, 'autorenew', 'Reload from Configuration', ($this) => $this.refresh()),
-      new ToolbarAction(this, 'cloud_download', 'Pull from KV Store', ($this) => $this.load()),
-      new ToolbarAction(this, 'cloud_upload', 'Push to KV Store', ($this) => $this.store()),
+      new ToolbarAction(this, 'cloud_download', 'Pull from KV Store', ($this) => $this.pull()),
+      new ToolbarAction(this, 'cloud_upload', 'Push to KV Store', ($this) => $this.push())
     ]);
   }
 
   onChange() {
-    this.set();
+    this.set(false, false, () => {
+      this.footer = 'Configuration has been saved.';
+    }, () => {
+      this.footer = 'Configuration can\'t be saved - invalid input.';
+    });
   }
 
   ngOnDestroy(): void {
@@ -36,34 +42,62 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   }
 
   refresh() {
-    const $this = this;
-    this.lifter.getConfiguration(true).subscribe((text) => {
+    this.lifter.getConfiguration(true, false).subscribe((text) => {
       if (text !== this.text) {
         let dialogRef = this.dialog.open(ConfigurationUpdateDialog);
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
-            $this.text = text;
-            $this.set(true);
+            this.text = text;
+            this.set(true);
           }
         });
       }
     });
   }
 
-  load() {
-    console.log(this.text);
+  pull() {
+    this.lifter.getConfiguration(false, true).subscribe((text) => {
+      if (text !== this.text) {
+        let dialogRef = this.dialog.open(ConfigurationUpdateDialog);
+        dialogRef.afterClosed().subscribe(result => {
+          if (result) {
+            this.text = text;
+            this.set(true);
+          }
+        });
+      }
+    });
   }
 
-  store() {
-    console.log(this.text);
+  push() {
+    this.set(true, true, () => {
+      const config = new MdSnackBarConfig();
+      config.duration = 2000;
+      this.snackBar.open('Configuration is successfully stored to KV store!', null, config);
+    }, () => {
+      const config = new MdSnackBarConfig();
+      config.duration = 2000;
+      this.snackBar.open('An error occurred!', null, config);
+    })
   }
 
-  private set(force: boolean = false): void {
+  private set(kv: boolean = false, force: boolean = false, success: () => any = () => {
+  }, error: () => any = () => {
+  }): void {
     this.toolbar.progressStart();
-    this.lifter.setConfiguration(this.text, force).subscribe(
-      () => this.toolbar.progressStop(),
-      () => this.toolbar.progressStop(),
-      () => this.toolbar.progressStop()
+    this.lifter.setConfiguration(this.text, kv, force).subscribe(
+      () => {
+        success();
+        this.toolbar.progressStop();
+      },
+      () => {
+        error();
+        this.toolbar.progressStop();
+      },
+      () => {
+        success();
+        this.toolbar.progressStop();
+      }
     );
   }
 }

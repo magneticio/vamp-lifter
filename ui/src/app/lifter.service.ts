@@ -12,10 +12,12 @@ export class LifterService {
   constructor(private http: HttpClient) {
   }
 
-  getConfiguration(base: Boolean): Observable<string> {
+  getConfiguration(base: Boolean, kv: Boolean): Observable<string> {
     const headers = new HttpHeaders().set('Accept', 'application/x-yaml');
     let params = new HttpParams();
+    params = kv ? params.append('key_value', 'true') : params;
     params = base ? params.append('static', 'true') : params;
+
     return this.http
       .get(environment.api('config'),
         {headers: headers, params: params, responseType: 'text'}
@@ -25,9 +27,11 @@ export class LifterService {
       });
   }
 
-  setConfiguration(config: string, force: boolean = false): Observable<any> {
+  setConfiguration(config: string, kv: boolean = false, force: boolean = false): Observable<any> {
     if (force || this.config !== config) {
-      return this.http.post(environment.api('config'), config);
+      let params = new HttpParams();
+      params = kv ? params.append('key_value', 'true') : params;
+      return this.http.post(environment.api('config'), config, {params: params});
     }
     return Observable.from([]);
   }
