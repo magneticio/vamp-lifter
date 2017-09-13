@@ -21,13 +21,15 @@ trait ConfigurationRoute {
     pathPrefix("configuration" | "config") {
       get {
         pathEndOrSingleSlash {
-          onSuccess(configuration()) { result ⇒
-            respondWith(OK, result)
+          parameters('static.as[Boolean] ? false) { static ⇒
+            onSuccess(configuration(static)) { result ⇒
+              respondWith(OK, result)
+            }
           }
         }
       } ~ (method(PUT) | method(POST)) {
         entity(as[String]) { request ⇒
-          onSuccess(configuration(Option(request))) { result ⇒
+          onSuccess(configuration(request)) { result ⇒
             respondWith(Accepted, result)
           }
         }
@@ -35,8 +37,12 @@ trait ConfigurationRoute {
     }
   }
 
-  private def configuration(input: Option[String] = None): Future[Map[String, Any]] = {
-    input.foreach(c ⇒ config = Config.unmarshall(c, filter))
-    Future.successful(config)
+  private def configuration(static: Boolean = false): Future[Map[String, Any]] = Future.successful {
+    if (static) Config.export(Config.Type.application, flatten = false, filter) else config
+  }
+
+  private def configuration(input: String): Future[Map[String, Any]] = {
+    config = Config.unmarshall(input, filter)
+    configuration()
   }
 }

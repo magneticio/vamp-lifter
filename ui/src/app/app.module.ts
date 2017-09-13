@@ -3,14 +3,14 @@ import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {
-  MdButtonModule, MdIconModule, MdListModule, MdProgressBarModule, MdSidenavModule,
+  MdButtonModule, MdDialogModule, MdIconModule, MdListModule, MdProgressBarModule, MdSidenavModule,
   MdToolbarModule, MdTooltipModule
 } from '@angular/material';
 
 import {AppComponent} from './app.component';
 import {ConnectionsComponent} from './connections/connections.component';
 import {InitializationComponent} from './initialization/initialization.component';
-import {ConfigurationComponent} from './configuration/configuration.component';
+import {ConfigurationComponent, ConfigurationUpdateDialog} from './configuration/configuration.component';
 import {AceEditorModule} from 'ng2-ace-editor';
 import {LifterService} from './lifter.service';
 import {HttpClientModule} from '@angular/common/http';
@@ -30,7 +30,8 @@ const routes: Routes = [
     ConnectionsComponent,
     InitializationComponent,
     ConfigurationComponent,
-    ToolbarComponent
+    ToolbarComponent,
+    ConfigurationUpdateDialog
   ],
   imports: [
     RouterModule.forRoot(routes),
@@ -44,10 +45,12 @@ const routes: Routes = [
     MdSidenavModule,
     MdListModule,
     MdProgressBarModule,
-    MdTooltipModule
+    MdTooltipModule,
+    MdDialogModule
   ],
   providers: [LifterService, ToolbarService],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  entryComponents: [ConfigurationUpdateDialog]
 })
 export class AppModule {
 }
