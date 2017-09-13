@@ -4,7 +4,6 @@ import java.sql.{ Connection, DriverManager, ResultSet, Statement }
 
 import cats.data.{ EitherT, Kleisli }
 import cats.~>
-import io.vamp.lifter.SqlLifterSeed
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -95,6 +94,27 @@ object SqlInterpreter {
           case CreateDatabaseIfNotExistsIn(resultSet, query) ⇒ executeCreateDatabaseIfNotExistsIn(resultSet, query, sls)
         }
       }
+  }
+
+  val sqLiteInterpreter = new (SqlDSL ~> SqlResult) {
+    override def apply[A](sqlDSL: SqlDSL[A]): SqlResult[A] =
+      Kleisli[LifterResult, SqlLifterSeed, A] { sls ⇒
+        sqlDSL match {
+          case GetConnection(default) ⇒
+            tryToEitherT(
+              DriverManager.getConnection(sls.vampDatabaseUrl),
+              t ⇒ s"Unable to get connection to the database: ${t.getMessage}")
+          case CloseConnection(connection)                   ⇒ executeCloseConnection(connection)
+          case CreateStatement(connection)                   ⇒ executeCreateStatement(connection)
+          case CloseStatement(statement)                     ⇒ executeCloseStatement(statement)
+          case ExecuteStatement(statement, query)            ⇒ executeExecuteStatement(statement, query)
+          case ExecuteQuery(statement, query)                ⇒ executeExecuteQuery(statement, query)
+          case CreateDatabaseQuery                           ⇒ lifterResult("")
+          case SelectDatabasesQuery                          ⇒ lifterResult("")
+          case CreateDatabaseIfNotExistsIn(resultSet, query) ⇒ lifterResult(true)
+        }
+      }
+
   }
 
   // TODO Fix this imperative while loop and state
