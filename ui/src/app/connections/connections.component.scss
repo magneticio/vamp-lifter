@@ -1,0 +1,21 @@
+.sections {
+  padding: 10px;
+}
+
+.section {
+  width: calc(100% - 48px);
+  margin-bottom: 10px;
+}
+
+.status {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  padding: 20px;
+
+  md-spinner {
+    width: 24px;
+    height: auto;
+  }
+}

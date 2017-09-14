@@ -3,9 +3,10 @@ package io.vamp.lifter
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import io.vamp.bootstrap.{ ActorBootstrap, LoggingBootstrap }
+import io.vamp.bootstrap.{ ActorBootstrap, LoggingBootstrap, RestartableActorBootstrap }
 import io.vamp.common.Namespace
 import io.vamp.common.akka.Bootstrap
+import io.vamp.container_driver.ContainerDriverBootstrap
 import io.vamp.lifter.http.HttpApiBootstrap
 import io.vamp.persistence.PersistenceBootstrap
 import io.vamp.pulse.PulseBootstrap
@@ -36,7 +37,8 @@ object Lifter extends App {
       new Bootstrap {
         override def start(): Unit = LifterConfiguration.init
       } :+
-      new ActorBootstrap(new PersistenceBootstrap :: new PulseBootstrap :: new HttpApiBootstrap :: Nil)
+      new RestartableActorBootstrap(namespace)(new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: Nil) :+
+      new ActorBootstrap(new HttpApiBootstrap :: Nil)
   }
 
   sys.addShutdownHook {

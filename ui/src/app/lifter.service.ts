@@ -1,8 +1,8 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
-import 'rxjs/Rx';
 import {environment} from '../environments/environment';
+import 'rxjs/Rx';
 
 @Injectable()
 export class LifterService {

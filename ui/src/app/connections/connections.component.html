@@ -1,3 +1,14 @@
-<p>
-  connections works!
-</p>
+<div class="sections">
+
+  <md-card class="section" *ngFor="let section of sections">
+    <md-card-header>
+      <md-card-title>{{ section.message }}</md-card-title>
+      <div class="status">
+        <md-icon *ngIf="section.ok" color="accent">check_circle</md-icon>
+        <md-icon *ngIf="section.error" color="warn">error</md-icon>
+        <md-spinner *ngIf="section.progress()" color="accent"></md-spinner>
+      </div>
+    </md-card-header>
+  </md-card>
+
+</div>
