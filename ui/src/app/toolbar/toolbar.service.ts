@@ -21,19 +21,14 @@ export class ToolbarService {
   actions: Subject<Array<ToolbarAction>> = new EventEmitter();
   progress: Subject<boolean> = new EventEmitter();
 
-  private progressActive: boolean = false;
-
   constructor() {
   }
 
   progressStart() {
-    this.progressActive = true;
-    setTimeout(() => this.progress.next(this.progressActive), 500
-    );
+    this.progress.next(true);
   }
 
   progressStop() {
-    this.progressActive = false;
     this.progress.next(false);
   }
 }

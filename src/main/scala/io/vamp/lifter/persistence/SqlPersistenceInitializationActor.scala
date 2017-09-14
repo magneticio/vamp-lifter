@@ -7,24 +7,26 @@ import cats.instances.future.catsStdInstancesForFuture
 import cats.~>
 import io.vamp.common.Config
 import io.vamp.common.akka.CommonSupportForActors
-import io.vamp.common.akka.IoC.actorFor
-import io.vamp.lifter.artifact.ArtifactInitializationActor
 import io.vamp.lifter.notification.{ LifterNotificationProvider, PersistenceInitializationFailure, PersistenceInitializationSuccess }
 import io.vamp.lifter.persistence.LifterPersistenceDSL.{ LiftAction, _ }
 import io.vamp.lifter.persistence.SqlDSL._
 import io.vamp.lifter.persistence.SqlInterpreter.{ LifterResult, SqlResult }
+import io.vamp.lifter.persistence.SqlPersistenceInitializationActor.Initialize
 import io.vamp.model.resolver.NamespaceValueResolver
 
 import scala.io.Source
 
-class SqlPersistenceInitializationActor(
-    val sqlDialectInterpreter: SqlDSL ~> SqlResult,
-    val sqlResource:           String
-) extends CommonSupportForActors with NamespaceValueResolver with LifterNotificationProvider {
+object SqlPersistenceInitializationActor {
+
+  object Initialize
+
+}
+
+class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> SqlResult, val sqlResource: String) extends CommonSupportForActors with NamespaceValueResolver with LifterNotificationProvider {
 
   def receive: Actor.Receive = {
-    case "init" ⇒
-
+    case Initialize ⇒
+      val receiver = sender()
       val url = resolveWithNamespace(Config.string("vamp.persistence.database.sql.url")())
       val vampDatabaseUrl = Config.string("vamp.persistence.database.sql.database-server-url")()
       val db = resolveWithNamespace(Config.string("vamp.persistence.database.sql.database")())
@@ -62,10 +64,9 @@ class SqlPersistenceInitializationActor(
         executeSQLiteActions(sqlLifterSeed).value.foreach {
           case Left(errorMessage) ⇒ reportException(PersistenceInitializationFailure(errorMessage))
           case Right(_) ⇒
-            actorFor[ArtifactInitializationActor] ! ArtifactInitializationActor.Load
+            receiver ! Initialize
             info(PersistenceInitializationSuccess)
         }
-
       } else {
         val sqlInitCommand: LiftAction[Boolean] = for {
           databaseCreated ← createDatabase
@@ -80,12 +81,9 @@ class SqlPersistenceInitializationActor(
         executeSqlActions(sqlLifterSeed).value.foreach {
           case Left(errorMessage) ⇒ reportException(PersistenceInitializationFailure(errorMessage))
           case Right(_) ⇒
-            actorFor[ArtifactInitializationActor] ! ArtifactInitializationActor.Load
+            receiver ! Initialize
             info(PersistenceInitializationSuccess)
         }
       }
   }
-
-  override def preStart(): Unit = self ! "init"
-
 }

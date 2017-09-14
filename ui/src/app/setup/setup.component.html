@@ -1,0 +1,35 @@
+<div class="sections">
+
+  <md-card class="section">
+    <md-card-header>
+      <md-card-title>
+        <md-checkbox [(ngModel)]="model['key_value']"><span class="label">key-value store</span></md-checkbox>
+      </md-card-title>
+    </md-card-header>
+  </md-card>
+
+  <md-card class="section">
+    <md-card-header>
+      <md-card-title>
+        <md-checkbox [(ngModel)]="model['persistence']"><span class="label">persistence</span></md-checkbox>
+      </md-card-title>
+    </md-card-header>
+  </md-card>
+
+  <md-card class="section">
+    <md-card-header>
+      <md-card-title>
+        <md-checkbox [(ngModel)]="model['pulse']"><span class="label">pulse</span></md-checkbox>
+      </md-card-title>
+    </md-card-header>
+  </md-card>
+
+  <md-card class="section">
+    <md-card-header>
+      <md-card-title *ngFor="let artifact of artifacts">
+        <md-checkbox [(ngModel)]="model['artifacts'][artifact]"><span class="label">{{ artifact }}</span></md-checkbox>
+      </md-card-title>
+    </md-card-header>
+  </md-card>
+
+</div>

@@ -13,14 +13,14 @@ export class ConnectionsComponent implements OnInit {
 
   sections: Array<Section>;
 
-  constructor(private http: HttpClient, private toolbar: ToolbarService,) {
+  constructor(private http: HttpClient, private toolbar: ToolbarService) {
   }
 
   ngOnInit() {
+    this.check();
     this.toolbar.actions.next([
       new ToolbarAction(this, 'refresh', 'Refresh', ($this) => $this.check())
     ]);
-    this.check();
   }
 
   private reset() {
@@ -34,7 +34,15 @@ export class ConnectionsComponent implements OnInit {
 
   private check() {
     this.reset();
+    setTimeout(() => {
+      this.toolbar.progressStart();
+      this.pull();
+    });
+  }
+
+  private pull() {
     this.http.get(environment.api('connections')).subscribe((info) => {
+      this.toolbar.progressStop();
       this.extract('key_value', () => info['key_value'].type);
       this.extract('persistence', () => info['persistence'].database.type);
       this.extract('pulse', () => info['pulse'].type);
@@ -44,7 +52,8 @@ export class ConnectionsComponent implements OnInit {
         section.ok = false;
         section.error = true;
       });
-    });
+      this.toolbar.progressStop();
+    }, () => this.toolbar.progressStop());
   }
 
   private extract(id: string, pull: () => any) {
@@ -79,9 +88,5 @@ class Section {
     this.message = message;
     this.ok = false;
     this.error = false;
-  }
-
-  progress() {
-    return !(this.ok || this.error);
   }
 }

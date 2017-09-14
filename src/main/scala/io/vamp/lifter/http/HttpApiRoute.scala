@@ -14,6 +14,7 @@ class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespa
     extends AbstractHttpApiRoute
     with ConfigurationRoute
     with ConnectionRoute
+    with SetupRoute
     with LifterNotificationProvider {
 
   implicit val timeout: Timeout = Config.timeout("vamp.lifter.http-api.response-timeout")()
@@ -39,7 +40,7 @@ class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespa
         pathPrefix("api") {
           encodeResponse {
             decodeRequest {
-              configurationRoutes ~ connectionRoutes
+              configurationRoutes ~ connectionRoutes ~ setupRoutes
             }
           }
         }

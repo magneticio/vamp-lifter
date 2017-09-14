@@ -19,7 +19,7 @@ import scala.io.Source
 
 object ArtifactInitializationActor {
 
-  object Load
+  case class Load(files: List[String])
 
 }
 
@@ -29,11 +29,11 @@ class ArtifactInitializationActor extends ArtifactLoader with CommonSupportForAc
 
   implicit lazy val timeout: Timeout = PersistenceActor.timeout()
 
-  private lazy val files = Config.stringList("vamp.lifter.artifacts")()
-
   def receive: Actor.Receive = {
-    case Load ⇒ loadFiles()(files)
-    case _    ⇒
+    case Load(files) ⇒
+      val receiver = sender()
+      loadFiles(force = true)(Config.stringList("vamp.lifter.artifacts")().filter(files.contains)).foreach(_ ⇒ receiver ! true)
+    case _ ⇒
   }
 }
 
@@ -42,15 +42,12 @@ trait ArtifactLoader extends ArtifactApiController with DeploymentApiController 
 
   implicit def timeout: Timeout
 
-  protected def loadFiles(force: Boolean = false): List[String] ⇒ Unit = {
-    _.foreach(file ⇒ load(Paths.get(file), Source.fromFile(file).mkString, force))
+  protected def loadFiles(force: Boolean = false): List[String] ⇒ Future[Any] = { files ⇒
+    val result = files.map(file ⇒ load(Paths.get(file), Source.fromFile(file).mkString, force))
+    Future.sequence(result)
   }
 
-  protected def loadResources(force: Boolean = false): List[String] ⇒ Unit = {
-    _.map(Paths.get(_)).foreach(path ⇒ load(path, Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString, force))
-  }
-
-  protected def load(path: Path, source: String, force: Boolean): Unit = {
+  protected def load(path: Path, source: String, force: Boolean): Future[Any] = {
 
     val `type` = path.getParent.getFileName.toString
     val fileName = path.getFileName.toString

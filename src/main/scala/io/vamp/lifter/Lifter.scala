@@ -38,7 +38,7 @@ object Lifter extends App {
         override def start(): Unit = LifterConfiguration.init
       } :+
       new RestartableActorBootstrap(namespace)(new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: Nil) :+
-      new ActorBootstrap(new HttpApiBootstrap :: Nil)
+      new ActorBootstrap(new SetupBootstrap :: new HttpApiBootstrap :: Nil)
   }
 
   sys.addShutdownHook {

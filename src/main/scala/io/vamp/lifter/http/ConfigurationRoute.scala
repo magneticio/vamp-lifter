@@ -30,14 +30,12 @@ trait ConfigurationRoute {
   implicit def executionContext: ExecutionContext
 
   lazy val configurationRoutes: Route = {
-    pathPrefix("configuration" | "config") {
+    path("configuration" | "config") {
       get {
-        pathEndOrSingleSlash {
-          parameters('static.as[Boolean] ? false) { static ⇒
-            parameters('key_value.as[Boolean] ? false) { kv ⇒
-              onSuccess(configuration(static, kv)) { result ⇒
-                respondWith(OK, result)
-              }
+        parameters('static.as[Boolean] ? false) { static ⇒
+          parameters('key_value.as[Boolean] ? false) { kv ⇒
+            onSuccess(configuration(static, kv)) { result ⇒
+              respondWith(OK, result)
             }
           }
         }
@@ -64,14 +62,17 @@ trait ConfigurationRoute {
 
   private def configuration(input: String, kv: Boolean): Future[Map[String, Any]] = try {
     val cfg = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, filter)
+    LifterConfiguration.dynamic(cfg)
 
     if (kv) IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set("configuration" :: Nil, if (cfg.isEmpty) None else Option(Config.marshall(cfg))) map { _ ⇒
-      LifterConfiguration.dynamic(cfg)
       actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
       LifterConfiguration.dynamic
+    } recover {
+      case _ ⇒
+        actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
+        LifterConfiguration.dynamic
     }
     else {
-      LifterConfiguration.dynamic(cfg)
       Future.successful(LifterConfiguration.dynamic)
     }
   } catch {

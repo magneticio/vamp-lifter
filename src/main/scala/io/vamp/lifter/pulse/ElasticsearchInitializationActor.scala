@@ -1,4 +1,4 @@
-package io.vamp.lifter.elasticsearch
+package io.vamp.lifter.pulse
 
 import akka.actor.{ FSM, _ }
 import io.vamp.common.akka._
@@ -45,11 +45,11 @@ trait ElasticsearchInitializationActor extends FSM[ElasticsearchInitializationAc
 
   def elasticsearchUrl: String
 
-  lazy implicit val timeout = PulseActor.timeout()
+  lazy implicit val timeout: akka.util.Timeout = PulseActor.timeout()
 
   private val httpClient = new HttpClient
 
-  def done() = goto(Done) using 0
+  def done(): State = stop()
 
   startWith(Phase1, 1)
 
@@ -82,7 +82,7 @@ trait ElasticsearchInitializationActor extends FSM[ElasticsearchInitializationAc
   }
 
   when(Done) {
-    case _ ⇒ stay()
+    case _ ⇒ stop()
   }
 
   initialize()
@@ -99,7 +99,7 @@ trait ElasticsearchInitializationActor extends FSM[ElasticsearchInitializationAc
   protected def initializeTemplates(): Unit = {
     val receiver = self
 
-    def createTemplate(definition: TemplateDefinition) = {
+    def createTemplate(definition: TemplateDefinition): Unit = {
       receiver ! WaitForOne
       httpClient.put[Any](s"$elasticsearchUrl/_template/${definition.name}", definition.template) onComplete {
         _ ⇒ receiver ! DoneWithOne

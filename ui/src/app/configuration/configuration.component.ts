@@ -1,7 +1,10 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
-import {LifterService} from "../lifter.service";
 import {ToolbarAction, ToolbarService} from "../toolbar/toolbar.service";
 import {MD_DIALOG_DATA, MdDialog, MdDialogRef, MdSnackBar, MdSnackBarConfig} from "@angular/material";
+import {environment} from "../../environments/environment";
+import {Observable} from "rxjs/Observable";
+import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
+import 'rxjs/Rx';
 
 @Component({
   selector: 'app-configuration',
@@ -10,18 +13,21 @@ import {MD_DIALOG_DATA, MdDialog, MdDialogRef, MdSnackBar, MdSnackBarConfig} fro
 })
 export class ConfigurationComponent implements OnInit, OnDestroy {
 
+  config: string;
   text: string = '';
   options: any = {maxLines: 1000, printMargin: false};
   footer: string = '';
 
-  constructor(private lifter: LifterService,
+  constructor(private http: HttpClient,
               private toolbar: ToolbarService,
               private dialog: MdDialog,
               private snackBar: MdSnackBar) {
   }
 
   ngOnInit() {
-    this.lifter.getConfiguration(false, false).subscribe((text) => this.text = text);
+    this.getConfiguration(false, false).subscribe((text) => this.text = text, () => {
+      this.footer = 'Configuration can\'t be retrieved!';
+    });
     this.toolbar.actions.next([
       new ToolbarAction(this, 'autorenew', 'Reload from Configuration', ($this) => $this.refresh()),
       new ToolbarAction(this, 'cloud_download', 'Pull from KV Store', ($this) => $this.pull()),
@@ -42,13 +48,13 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   }
 
   refresh() {
-    this.lifter.getConfiguration(true, false).subscribe((text) => {
+    this.getConfiguration(true, false).subscribe((text) => {
       if (text !== this.text) {
         let dialogRef = this.dialog.open(ConfigurationUpdateDialog);
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
             this.text = text;
-            this.set(true);
+            this.set(false, true);
           }
         });
       }
@@ -56,13 +62,13 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   }
 
   pull() {
-    this.lifter.getConfiguration(false, true).subscribe((text) => {
+    this.getConfiguration(false, true).subscribe((text) => {
       if (text !== this.text) {
         let dialogRef = this.dialog.open(ConfigurationUpdateDialog);
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
             this.text = text;
-            this.set(true);
+            this.set(true, true);
           }
         });
       }
@@ -89,7 +95,7 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   }, error: () => any = () => {
   }): void {
     this.toolbar.progressStart();
-    this.lifter.setConfiguration(this.text, kv, force).subscribe(
+    this.setConfiguration(this.text, kv, force).subscribe(
       () => {
         success();
         this.toolbar.progressStop();
@@ -103,6 +109,30 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
         this.toolbar.progressStop();
       }
     );
+  }
+
+  private getConfiguration(base: Boolean, kv: Boolean): Observable<string> {
+    const headers = new HttpHeaders().set('Accept', 'application/x-yaml');
+    let params = new HttpParams();
+    params = kv ? params.append('key_value', 'true') : params;
+    params = base ? params.append('static', 'true') : params;
+
+    return this.http
+      .get(environment.api('config'),
+        {headers: headers, params: params, responseType: 'text'}
+      ).map((body) => {
+        this.config = body;
+        return body;
+      });
+  }
+
+  private setConfiguration(config: string, kv: boolean = false, force: boolean = false): Observable<any> {
+    if (force || this.config !== config) {
+      let params = new HttpParams();
+      params = kv ? params.append('key_value', 'true') : params;
+      return this.http.post(environment.api('config'), config, {params: params});
+    }
+    return Observable.from([]);
   }
 }
 

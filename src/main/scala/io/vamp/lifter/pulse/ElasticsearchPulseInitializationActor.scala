@@ -1,14 +1,13 @@
 package io.vamp.lifter.pulse
 
-import io.vamp.lifter.elasticsearch.ElasticsearchInitializationActor
-import io.vamp.lifter.elasticsearch.ElasticsearchInitializationActor.TemplateDefinition
 import io.vamp.lifter.notification.LifterNotificationProvider
+import io.vamp.lifter.pulse.ElasticsearchInitializationActor.TemplateDefinition
 import io.vamp.model.resolver.NamespaceValueResolver
 import io.vamp.pulse.{ ElasticsearchPulseActor, ElasticsearchPulseEvent }
 
 import scala.io.Source
 
-class ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with NamespaceValueResolver with ElasticsearchInitializationActor with LifterNotificationProvider {
+class ElasticsearchPulseInitializationActor extends ElasticsearchInitializationActor with ElasticsearchPulseEvent with NamespaceValueResolver with LifterNotificationProvider {
 
   lazy val indexName: String = resolveWithNamespace(ElasticsearchPulseActor.indexName(), lookup = true)
 

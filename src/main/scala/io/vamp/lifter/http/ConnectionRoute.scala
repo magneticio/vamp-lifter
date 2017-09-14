@@ -16,12 +16,10 @@ trait ConnectionRoute extends InfoController {
   implicit def namespace: Namespace
 
   lazy val connectionRoutes: Route = {
-    pathPrefix("connections" | "connection") {
+    path("connections" | "connection") {
       get {
-        pathEndOrSingleSlash {
-          onSuccess(infoMessage(List("persistence", "key_value", "pulse", "container_driver").toSet)) {
-            case (result, _) ⇒ respondWith(OK, result)
-          }
+        onSuccess(infoMessage(List("persistence", "key_value", "pulse", "container_driver").toSet)) {
+          case (result, _) ⇒ respondWith(OK, result)
         }
       }
     }
