@@ -22,10 +22,7 @@ object LifterConfiguration {
     )
   }
 
-  def dynamic(config: Map[String, Any])(implicit namespace: Namespace): Map[String, Any] = {
-    Config.load(config)
-    dynamic
-  }
+  def dynamic(config: Map[String, Any])(implicit namespace: Namespace): Unit = Config.load(config)
 
   def dynamic(implicit namespace: Namespace): Map[String, Any] = Config.export(Config.Type.dynamic, flatten = false, filter)
 }

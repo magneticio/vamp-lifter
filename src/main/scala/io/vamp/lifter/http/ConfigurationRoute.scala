@@ -67,8 +67,13 @@ trait ConfigurationRoute {
 
     if (kv) IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set("configuration" :: Nil, if (cfg.isEmpty) None else Option(Config.marshall(cfg))) map { _ ⇒
       LifterConfiguration.dynamic(cfg)
+      actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
+      LifterConfiguration.dynamic
     }
-    else Future.successful(LifterConfiguration.dynamic(cfg))
+    else {
+      LifterConfiguration.dynamic(cfg)
+      Future.successful(LifterConfiguration.dynamic)
+    }
   } catch {
     case _: Exception ⇒ throwException(InvalidConfigurationError)
   }
