@@ -3,8 +3,9 @@ package io.vamp.lifter
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import io.vamp.bootstrap.{ ActorBootstrap, ConfigurationBootstrap, LoggingBootstrap }
+import io.vamp.bootstrap.{ ActorBootstrap, LoggingBootstrap }
 import io.vamp.common.Namespace
+import io.vamp.common.akka.Bootstrap
 import io.vamp.lifter.http.HttpApiBootstrap
 import io.vamp.persistence.PersistenceBootstrap
 import io.vamp.pulse.PulseBootstrap
@@ -32,7 +33,9 @@ object Lifter extends App {
              |                                                                      by magnetic.io
              |""".stripMargin
       } :+
-      new ConfigurationBootstrap :+
+      new Bootstrap {
+        override def start(): Unit = LifterConfiguration.init
+      } :+
       new ActorBootstrap(new PersistenceBootstrap :: new PulseBootstrap :: new HttpApiBootstrap :: Nil)
   }
 

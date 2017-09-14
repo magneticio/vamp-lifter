@@ -66,6 +66,10 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
           }
         });
       }
+    }, () => {
+      const config = new MdSnackBarConfig();
+      config.duration = 2000;
+      this.snackBar.open('An error occurred!', null, config);
     });
   }
 

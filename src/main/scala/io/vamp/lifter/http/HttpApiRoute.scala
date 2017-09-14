@@ -52,7 +52,7 @@ class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespa
     }
   } ~ pathPrefix("") {
     encodeResponse {
-      if (directory.isEmpty) notFound else getFromDirectory(directory)
+      if (directory.isEmpty) notFound else getFromDirectory(directory) ~ getFromFile(index)
     }
   }
 
