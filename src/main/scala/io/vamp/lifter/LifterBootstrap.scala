@@ -31,7 +31,7 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
     }
 
     Future.sequence(IoC.createActor[PulseInitializationActor] :: IoC.createActor[ArtifactInitializationActor] :: dbActor).flatMap {
-      list ⇒ setup(template()).map(_ ⇒ list)
+      list ⇒ if (initialize) setup(template()).map(_ ⇒ list) else Future.successful(list)
     }
   }
 
