@@ -26,7 +26,9 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.getConfiguration(false, false).subscribe((text) => this.text = text, () => {
-      this.footer = 'Configuration can\'t be retrieved!';
+      const config = new MdSnackBarConfig();
+      config.duration = 2000;
+      this.snackBar.open('An error occurred!', null, config);
     });
     this.toolbar.actions.next([
       new ToolbarAction(this, 'autorenew', 'Reload from Configuration', ($this) => $this.refresh()),

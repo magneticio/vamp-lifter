@@ -138,9 +138,7 @@ trait ElasticsearchInitializationActor extends FSM[ElasticsearchInitializationAc
     receiver ! DoneWithOne
   }
 
-  protected def initializeCustom(): Unit = {
-    self ! DoneWithOne
-  }
+  protected def initializeCustom(): Unit = self ! DoneWithOne
 
   protected def initializeIndex(indexName: String): Unit = {
     val receiver = self

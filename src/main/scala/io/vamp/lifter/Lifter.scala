@@ -38,7 +38,7 @@ object Lifter extends App {
         override def start(): Unit = LifterConfiguration.init
       } :+
       new RestartableActorBootstrap(namespace)(new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: Nil) :+
-      new ActorBootstrap(new SetupBootstrap :: new HttpApiBootstrap :: Nil)
+      new ActorBootstrap(new LifterBootstrap(argument("initialize")) :: new HttpApiBootstrap :: Nil)
   }
 
   sys.addShutdownHook {
@@ -47,4 +47,6 @@ object Lifter extends App {
   }
 
   bootstrap.foreach(_.start())
+
+  def argument(name: String): Boolean = args.map(_.stripMargin('-').trim).contains(name)
 }
