@@ -42,18 +42,19 @@ export class ConnectionsComponent implements OnInit {
 
   private pull() {
     this.http.get(environment.api('connections')).subscribe((info) => {
+      this.extractAll(info);
       this.toolbar.progressStop();
-      this.extract('key_value', () => info['key_value'].type);
-      this.extract('persistence', () => info['persistence'].database.type);
-      this.extract('pulse', () => info['pulse'].type);
-      this.extract('container_scheduler', () => info['container_driver'].type);
-    }, () => {
-      this.sections.forEach((section) => {
-        section.ok = false;
-        section.error = true;
-      });
+    }, (response) => {
+      this.extractAll(response.error);
       this.toolbar.progressStop();
     }, () => this.toolbar.progressStop());
+  }
+
+  private extractAll(response: any) {
+    this.extract('key_value', () => response['key_value'].type);
+    this.extract('persistence', () => response['persistence'].database.type);
+    this.extract('pulse', () => response['pulse'].type);
+    this.extract('container_scheduler', () => response['container_driver'].type);
   }
 
   private extract(id: string, pull: () => any) {

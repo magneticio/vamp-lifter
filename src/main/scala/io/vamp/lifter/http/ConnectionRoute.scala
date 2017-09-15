@@ -19,7 +19,7 @@ trait ConnectionRoute extends InfoController {
     path("connections" | "connection") {
       get {
         onSuccess(infoMessage(List("persistence", "key_value", "pulse", "container_driver").toSet)) {
-          case (result, _) ⇒ respondWith(OK, result)
+          case (result, succeeded) ⇒ respondWith(if (succeeded) OK else ServiceUnavailable, result)
         }
       }
     }
