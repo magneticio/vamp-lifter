@@ -6,25 +6,18 @@ import cats.implicits.{ catsStdInstancesForList, toTraverseOps }
 import cats.instances.future.catsStdInstancesForFuture
 import cats.~>
 import io.vamp.common.Config
-import io.vamp.common.akka.CommonSupportForActors
-import io.vamp.lifter.notification.{ LifterNotificationProvider, PersistenceInitializationFailure, PersistenceInitializationSuccess }
+import io.vamp.lifter.notification.{ PersistenceInitializationFailure, PersistenceInitializationSuccess }
 import io.vamp.lifter.persistence.LifterPersistenceDSL.{ LiftAction, _ }
 import io.vamp.lifter.persistence.SqlDSL._
 import io.vamp.lifter.persistence.SqlInterpreter.{ LifterResult, SqlResult }
-import io.vamp.lifter.persistence.SqlPersistenceInitializationActor.Initialize
-import io.vamp.model.resolver.NamespaceValueResolver
 
 import scala.io.Source
 
-object SqlPersistenceInitializationActor {
+class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> SqlResult, val sqlResource: String) extends PersistenceInitializationActor {
 
-  object Initialize
+  import PersistenceInitializationActor._
 
-}
-
-class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> SqlResult, val sqlResource: String) extends CommonSupportForActors with NamespaceValueResolver with LifterNotificationProvider {
-
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case Initialize ⇒
       val receiver = sender()
       val url = resolveWithNamespace(Config.string("vamp.persistence.database.sql.url")())
@@ -64,7 +57,7 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
         executeSQLiteActions(sqlLifterSeed).value.foreach {
           case Left(errorMessage) ⇒ reportException(PersistenceInitializationFailure(errorMessage))
           case Right(_) ⇒
-            receiver ! Initialize
+            receiver ! Initialized
             info(PersistenceInitializationSuccess)
         }
       } else {
@@ -81,7 +74,7 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
         executeSqlActions(sqlLifterSeed).value.foreach {
           case Left(errorMessage) ⇒ reportException(PersistenceInitializationFailure(errorMessage))
           case Right(_) ⇒
-            receiver ! Initialize
+            receiver ! Initialized
             info(PersistenceInitializationSuccess)
         }
       }

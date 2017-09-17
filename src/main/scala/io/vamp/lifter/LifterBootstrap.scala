@@ -6,7 +6,8 @@ import akka.util.Timeout
 import io.vamp.common.akka.{ ActorBootstrap, IoC }
 import io.vamp.common.{ Config, Namespace }
 import io.vamp.lifter.artifact.ArtifactInitializationActor
-import io.vamp.lifter.persistence.{ SqlInterpreter, SqlPersistenceInitializationActor }
+import io.vamp.lifter.persistence.SqlInterpreter.SqlInterpreter
+import io.vamp.lifter.persistence.{ PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor }
 import io.vamp.lifter.pulse.PulseInitializationActor
 import io.vamp.persistence.KeyValueStoreActor
 
@@ -23,11 +24,11 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
     logger.info(s"database: $db")
 
     val dbActor = db match {
-      case "mysql"     ⇒ List(IoC.createActor[SqlPersistenceInitializationActor](SqlInterpreter.mysqlInterpreter, "mysql.sql"))
-      case "postgres"  ⇒ List(IoC.createActor[SqlPersistenceInitializationActor](SqlInterpreter.postgresqlInterpreter, "postgres.sql"))
-      case "sqlserver" ⇒ List(IoC.createActor[SqlPersistenceInitializationActor](SqlInterpreter.sqlServerInterpreter, "sqlserver.sql"))
-      case "sqlite"    ⇒ List(IoC.createActor[SqlPersistenceInitializationActor](SqlInterpreter.sqLiteInterpreter, "sqlite.sql"))
-      case _           ⇒ Nil
+      case "mysql"     ⇒ sqlPersistence(SqlInterpreter.mysqlInterpreter, "mysql.sql")
+      case "postgres"  ⇒ sqlPersistence(SqlInterpreter.postgresqlInterpreter, "postgres.sql")
+      case "sqlserver" ⇒ sqlPersistence(SqlInterpreter.sqlServerInterpreter, "sqlserver.sql")
+      case "sqlite"    ⇒ sqlPersistence(SqlInterpreter.sqLiteInterpreter, "sqlite.sql")
+      case _           ⇒ sqlPersistence()
     }
 
     Future.sequence(IoC.createActor[PulseInitializationActor] :: IoC.createActor[ArtifactInitializationActor] :: dbActor).flatMap {
@@ -36,6 +37,13 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
   }
 
   override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Unit = {}
+
+  private def sqlPersistence(): List[Future[ActorRef]] = List(IoC.createActor[PersistenceInitializationActor])
+
+  private def sqlPersistence(interpreter: SqlInterpreter, resource: String): List[Future[ActorRef]] = {
+    IoC.alias[PersistenceInitializationActor, SqlPersistenceInitializationActor]
+    List(IoC.createActor[SqlPersistenceInitializationActor](interpreter, resource))
+  }
 }
 
 trait VampInitialization {
@@ -70,7 +78,7 @@ trait VampInitialization {
 
   private def setupPersistence(mapping: Map[String, Any]): Future[Any] = {
     if (mapping.getOrElse("persistence", false).asInstanceOf[Boolean])
-      IoC.actorFor[SqlPersistenceInitializationActor] ? SqlPersistenceInitializationActor.Initialize
+      IoC.actorFor[PersistenceInitializationActor] ? PersistenceInitializationActor.Initialize
     else Future.successful(true)
   }
 

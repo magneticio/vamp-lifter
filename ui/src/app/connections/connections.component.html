@@ -2,7 +2,18 @@
 
   <md-card class="section" *ngFor="let section of sections">
     <md-card-header>
-      <md-card-title>{{ section.message }}</md-card-title>
+      <md-card-title>
+        <table style="min-width: 300px;">
+          <tr>
+            <td width="50%" style="text-align: right;">
+              <span>{{ section.label }}&nbsp;:&nbsp;</span>
+            </td>
+            <td width="50%">
+              <span>{{ section.message }}</span>
+            </td>
+          </tr>
+        </table>
+      </md-card-title>
       <div class="status">
         <md-icon *ngIf="section.ok" color="accent">check_circle</md-icon>
         <md-icon *ngIf="section.error" color="warn">error</md-icon>

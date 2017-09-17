@@ -44,7 +44,7 @@ val fp = "org.typelevel" %% "cats" % "0.9.0" ::
 val config = "com.typesafe" % "config" % "1.3.1" :: Nil
 
 val vamp = "io.vamp" %% "vamp-bootstrap" % "katana" :: Nil
-lazy val root = project.in(sbt.file(".")).settings(packAutoSettings ++ Seq(packExcludeJars := Seq("scala-.*\\.jar"))).settings(
+lazy val root = project.in(sbt.file(".")).settings(packAutoSettings).settings(
   libraryDependencies ++= vamp ++ akka ++ json4s ++ logging ++ sql ++ fp ++ config
 )
 

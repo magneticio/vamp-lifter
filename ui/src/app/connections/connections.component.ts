@@ -25,10 +25,10 @@ export class ConnectionsComponent implements OnInit {
 
   private reset() {
     this.sections = [
-      new Section('key_value', 'key-value store'),
-      new Section('persistence', 'persistence'),
-      new Section('pulse', 'pulse'),
-      new Section('container_scheduler', 'container scheduler')
+      new Section('key_value', 'key-value store', ''),
+      new Section('persistence', 'persistence', ''),
+      new Section('pulse', 'pulse', ''),
+      new Section('container_scheduler', 'container scheduler', '')
     ];
   }
 
@@ -72,6 +72,7 @@ export class ConnectionsComponent implements OnInit {
     if (section) {
       section.ok = false;
       section.error = true;
+      section.message = '<connection error>';
     }
   }
 }
@@ -79,13 +80,15 @@ export class ConnectionsComponent implements OnInit {
 class Section {
 
   id: string;
+  label: string;
   message: string;
 
   ok: boolean;
   error: boolean;
 
-  constructor(id: string, message: string) {
+  constructor(id: string, label: string, message: string) {
     this.id = id;
+    this.label = label;
     this.message = message;
     this.ok = false;
     this.error = false;

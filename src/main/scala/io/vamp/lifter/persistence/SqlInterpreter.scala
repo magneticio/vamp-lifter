@@ -16,6 +16,8 @@ object SqlInterpreter {
 
   type SqlResult[A] = Kleisli[LifterResult, SqlLifterSeed, A]
 
+  type SqlInterpreter = cats.~>[io.vamp.lifter.persistence.SqlDSL, io.vamp.lifter.persistence.SqlInterpreter.SqlResult]
+
   def tryToEitherT[A](action: ⇒ A, errorMessage: Throwable ⇒ ErrorMessage): EitherT[Future, ErrorMessage, A] =
     EitherT(Future.successful(Try(action).fold(t ⇒ Left(errorMessage(t)), Right(_))))
 
@@ -45,7 +47,7 @@ object SqlInterpreter {
       t ⇒ s"Unable to get connection to the database: ${t.getMessage}")
   }
 
-  val mysqlInterpreter = new (SqlDSL ~> SqlResult) {
+  val mysqlInterpreter: SqlInterpreter = new (SqlDSL ~> SqlResult) {
     override def apply[A](sqlDSL: SqlDSL[A]): SqlResult[A] =
       Kleisli[LifterResult, SqlLifterSeed, A] { sls ⇒
         sqlDSL match {
@@ -62,7 +64,7 @@ object SqlInterpreter {
       }
   }
 
-  val sqlServerInterpreter = new (SqlDSL ~> SqlResult) {
+  val sqlServerInterpreter: SqlInterpreter = new (SqlDSL ~> SqlResult) {
     override def apply[A](sqlDSL: SqlDSL[A]): SqlResult[A] =
       Kleisli[LifterResult, SqlLifterSeed, A] { sls ⇒
         sqlDSL match {
@@ -79,7 +81,7 @@ object SqlInterpreter {
       }
   }
 
-  val postgresqlInterpreter = new (SqlDSL ~> SqlResult) {
+  val postgresqlInterpreter: SqlInterpreter = new (SqlDSL ~> SqlResult) {
     override def apply[A](sqlDSL: SqlDSL[A]): SqlResult[A] =
       Kleisli[LifterResult, SqlLifterSeed, A] { sls ⇒
         sqlDSL match {
@@ -96,7 +98,7 @@ object SqlInterpreter {
       }
   }
 
-  val sqLiteInterpreter = new (SqlDSL ~> SqlResult) {
+  val sqLiteInterpreter: SqlInterpreter = new (SqlDSL ~> SqlResult) {
     override def apply[A](sqlDSL: SqlDSL[A]): SqlResult[A] =
       Kleisli[LifterResult, SqlLifterSeed, A] { sls ⇒
         sqlDSL match {
