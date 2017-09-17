@@ -5,7 +5,7 @@ import {environment} from '../../environments/environment';
 import {MdSnackBar, MdSnackBarConfig} from "@angular/material";
 
 @Component({
-  selector: 'app-setup',
+  selector: 'lifter-setup',
   templateUrl: './setup.component.html',
   styleUrls: ['./setup.component.scss']
 })

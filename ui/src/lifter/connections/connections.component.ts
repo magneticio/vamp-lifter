@@ -5,7 +5,7 @@ import {ToolbarAction, ToolbarService} from '../toolbar/toolbar.service';
 import {isNullOrUndefined} from "util";
 
 @Component({
-  selector: 'app-connections',
+  selector: 'lifter-connections',
   templateUrl: './connections.component.html',
   styleUrls: ['./connections.component.scss']
 })

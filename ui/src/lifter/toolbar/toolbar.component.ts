@@ -3,7 +3,7 @@ import {ToolbarAction, ToolbarService} from "./toolbar.service";
 import {NavigationEnd, Router} from "@angular/router";
 
 @Component({
-  selector: 'app-toolbar',
+  selector: 'lifter-toolbar',
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.scss']
 })

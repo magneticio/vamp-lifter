@@ -7,7 +7,7 @@ import {
   MdSidenavModule, MdSnackBarModule, MdToolbarModule, MdTooltipModule
 } from '@angular/material';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {AppComponent} from './app.component';
+import {LifterComponent} from './lifter.component';
 import {ConnectionsComponent} from './connections/connections.component';
 import {SetupComponent} from './setup/setup.component';
 import {ConfigurationComponent, ConfigurationUpdateDialog} from './configuration/configuration.component';
@@ -25,7 +25,7 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    AppComponent,
+    LifterComponent,
     ConnectionsComponent,
     SetupComponent,
     ConfigurationComponent,
@@ -53,8 +53,8 @@ const routes: Routes = [
     ReactiveFormsModule
   ],
   providers: [ToolbarService],
-  bootstrap: [AppComponent],
+  bootstrap: [LifterComponent],
   entryComponents: [ConfigurationUpdateDialog]
 })
-export class AppModule {
+export class LifterModule {
 }

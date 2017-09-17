@@ -7,7 +7,7 @@ import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
 import 'rxjs/Rx';
 
 @Component({
-  selector: 'app-configuration',
+  selector: 'lifter-configuration',
   templateUrl: './configuration.component.html',
   styleUrls: ['./configuration.component.scss'],
 })
@@ -139,7 +139,7 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
 }
 
 @Component({
-  selector: 'app-configuration-dialog',
+  selector: 'lifter-configuration-dialog',
   templateUrl: './dialog.component.html',
 })
 export class ConfigurationUpdateDialog {
