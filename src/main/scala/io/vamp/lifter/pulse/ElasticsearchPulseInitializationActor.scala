@@ -2,7 +2,7 @@ package io.vamp.lifter.pulse
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import io.vamp.common.Namespace
+import io.vamp.common.NamespaceProvider
 import io.vamp.common.http.HttpClient
 import io.vamp.common.notification.NotificationProvider
 import io.vamp.lifter.pulse.ElasticsearchPulseInitializationActor.TemplateDefinition
@@ -19,11 +19,9 @@ object ElasticsearchPulseInitializationActor {
 }
 
 trait ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with NamespaceValueResolver {
-  this: NotificationProvider ⇒
+  this: NamespaceProvider with NotificationProvider ⇒
 
   implicit def timeout: Timeout
-
-  implicit def namespace: Namespace
 
   implicit def actorSystem: ActorSystem
 
