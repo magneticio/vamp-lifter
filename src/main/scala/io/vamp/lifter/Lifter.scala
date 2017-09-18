@@ -7,9 +7,11 @@ import io.vamp.bootstrap.{ ActorBootstrap, LoggingBootstrap, RestartableActorBoo
 import io.vamp.common.Namespace
 import io.vamp.common.akka.Bootstrap
 import io.vamp.container_driver.ContainerDriverBootstrap
+import io.vamp.gateway_driver.GatewayDriverBootstrap
 import io.vamp.lifter.http.HttpApiBootstrap
 import io.vamp.persistence.PersistenceBootstrap
 import io.vamp.pulse.PulseBootstrap
+import io.vamp.workflow_driver.WorkflowDriverBootstrap
 
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS }
 
@@ -37,7 +39,9 @@ object Lifter extends App {
       new Bootstrap {
         override def start(): Unit = LifterConfiguration.init
       } :+
-      new RestartableActorBootstrap(namespace)(new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: Nil) :+
+      new RestartableActorBootstrap(namespace)(
+        new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: new GatewayDriverBootstrap :: new WorkflowDriverBootstrap :: Nil
+      ) :+
       new ActorBootstrap(new LifterBootstrap(argument("initialize")) :: new HttpApiBootstrap :: Nil)
   }
 

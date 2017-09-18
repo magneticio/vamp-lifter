@@ -8,17 +8,17 @@ import io.vamp.common.http.HttpApiDirectives
 import io.vamp.lifter.notification.LifterNotificationProvider
 import io.vamp.operation.controller.InfoController
 
-trait ConnectionRoute extends InfoController {
+trait InfoRoute extends InfoController {
   this: LifterNotificationProvider with HttpApiDirectives ⇒
 
   implicit def timeout: Timeout
 
   implicit def namespace: Namespace
 
-  lazy val connectionRoutes: Route = {
-    path("connections" | "connection") {
+  lazy val infoRoutes: Route = {
+    path("information" | "info") {
       get {
-        onSuccess(infoMessage(List("persistence", "key_value", "pulse", "container_driver").toSet)) {
+        onSuccess(infoMessage(Set())) {
           case (result, succeeded) ⇒ respondWith(if (succeeded) OK else ServiceUnavailable, result)
         }
       }

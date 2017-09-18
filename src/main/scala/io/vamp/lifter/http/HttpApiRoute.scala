@@ -13,7 +13,7 @@ import io.vamp.lifter.notification.LifterNotificationProvider
 class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespace, val materializer: Materializer)
     extends AbstractHttpApiRoute
     with ConfigurationRoute
-    with ConnectionRoute
+    with InfoRoute
     with SetupRoute
     with LifterNotificationProvider {
 
@@ -40,7 +40,7 @@ class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespa
         pathPrefix("api") {
           encodeResponse {
             decodeRequest {
-              configurationRoutes ~ connectionRoutes ~ setupRoutes
+              configurationRoutes ~ infoRoutes ~ setupRoutes
             }
           }
         }
