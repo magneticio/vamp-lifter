@@ -73,7 +73,6 @@ pack:
 	mkdir -p $(TARGET)/vamp-lifter-$(VERSION)
 	cp -r $(TARGET)/pack/lib $(TARGET)/vamp-lifter-$(VERSION)/
 	mv $$(find $(TARGET)/vamp-lifter-$(VERSION)/lib -type f -name vamp-*-$(VERSION).jar) $(TARGET)/vamp-lifter-$(VERSION)/
-	cd ui && ng build -prod && cd .. && mv ui/dist $(TARGET)/vamp-lifter-$(VERSION)/ui
 
 	docker run \
 		--rm \
@@ -88,7 +87,6 @@ pack-local:
 	mkdir -p $(TARGET)/vamp-lifter-$(VERSION)
 	cp -r $(TARGET)/pack/lib $(TARGET)/vamp-lifter-$(VERSION)/
 	mv $$(find $(TARGET)/vamp-lifter-$(VERSION)/lib -type f -name "vamp-*-katana.jar") $(TARGET)/vamp-lifter-$(VERSION)/
-	cd ui && ng build -prod && cd .. && mv ui/dist $(TARGET)/vamp-lifter-$(VERSION)/ui
 
 	docker run \
 		--rm \
