@@ -15,10 +15,10 @@ trait InfoRoute extends InfoController {
 
   implicit def namespace: Namespace
 
-  lazy val infoRoutes: Route = {
+  def infoRoutes(on: Set[String] = Set()): Route = {
     path("information" | "info") {
       get {
-        onSuccess(infoMessage(Set())) {
+        onSuccess(infoMessage(on)) {
           case (result, succeeded) ⇒ respondWith(if (succeeded) OK else ServiceUnavailable, result)
         }
       }

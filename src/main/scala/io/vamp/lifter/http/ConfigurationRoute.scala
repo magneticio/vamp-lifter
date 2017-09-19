@@ -53,7 +53,7 @@ trait ConfigurationRoute {
 
   private def configuration(static: Boolean, kv: Boolean): Future[Map[String, Any]] = {
     if (static) Future.successful(LifterConfiguration.static) else if (kv) {
-      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get("configuration" :: Nil) map {
+      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get(configurationPath()) map {
         case Some(content: String) ⇒ Config.unmarshall(content)
         case _                     ⇒ Map[String, Any]()
       }
@@ -64,7 +64,7 @@ trait ConfigurationRoute {
     val cfg = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, filter)
     LifterConfiguration.dynamic(cfg)
 
-    if (kv) IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set("configuration" :: Nil, if (cfg.isEmpty) None else Option(Config.marshall(cfg))) map { _ ⇒
+    if (kv) IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set(configurationPath(), if (cfg.isEmpty) None else Option(Config.marshall(cfg))) map { _ ⇒
       actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
       LifterConfiguration.dynamic
     } recover {
@@ -78,4 +78,6 @@ trait ConfigurationRoute {
   } catch {
     case _: Exception ⇒ throwException(InvalidConfigurationError)
   }
+
+  protected def configurationPath(): List[String] = "configuration" :: Nil
 }
