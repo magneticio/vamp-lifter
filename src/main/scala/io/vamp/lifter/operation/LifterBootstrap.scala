@@ -1,4 +1,4 @@
-package io.vamp.lifter
+package io.vamp.lifter.operation
 
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.pattern.ask
@@ -9,7 +9,6 @@ import io.vamp.lifter.artifact.ArtifactInitializationActor
 import io.vamp.lifter.persistence.SqlInterpreter.SqlInterpreter
 import io.vamp.lifter.persistence.{ PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor }
 import io.vamp.lifter.pulse.PulseInitializationActor
-import io.vamp.persistence.KeyValueStoreActor
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -31,9 +30,11 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
       case _           ⇒ sqlPersistence()
     }
 
-    Future.sequence(IoC.createActor[PulseInitializationActor] :: IoC.createActor[ArtifactInitializationActor] :: dbActor).flatMap {
-      list ⇒ if (initialize) setup(template()).map(_ ⇒ list) else Future.successful(list)
-    }
+    Future.sequence(
+      IoC.createActor[PulseInitializationActor] :: IoC.createActor[ArtifactInitializationActor] :: dbActor
+    ).flatMap {
+        list ⇒ if (initialize) setup(template()).map(_ ⇒ list) else Future.successful(list)
+      }
   }
 
   override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Unit = {}
@@ -72,7 +73,7 @@ trait VampInitialization {
 
   private def setupKvStore(mapping: Map[String, Any]): Future[Any] = {
     if (mapping.getOrElse("key_value", false).asInstanceOf[Boolean])
-      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set("configuration" :: Nil, Option(Config.marshall(LifterConfiguration.dynamic)))
+      IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(namespace.name)
     else Future.successful(true)
   }
 

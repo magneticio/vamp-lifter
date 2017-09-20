@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.HttpMethods.{ POST, PUT }
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Route
 import io.vamp.common.http.HttpApiDirectives
-import io.vamp.lifter.VampInitialization
+import io.vamp.lifter.operation.VampInitialization
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization
 

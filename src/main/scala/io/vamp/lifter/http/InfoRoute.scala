@@ -13,9 +13,7 @@ trait InfoRoute extends InfoController {
 
   implicit def timeout: Timeout
 
-  implicit def namespace: Namespace
-
-  def infoRoutes(on: Set[String] = Set()): Route = {
+  def infoRoutes(on: Set[String] = Set())(implicit namespace: Namespace): Route = {
     path("information" | "info") {
       get {
         onSuccess(infoMessage(on)) {

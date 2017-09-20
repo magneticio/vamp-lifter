@@ -9,27 +9,23 @@ import akka.util.Timeout
 import io.vamp.common.akka.IoC
 import io.vamp.common.http.HttpApiDirectives
 import io.vamp.common.{ Config, Namespace }
-import io.vamp.lifter.LifterConfiguration
 import io.vamp.lifter.notification.LifterNotificationProvider
+import io.vamp.lifter.operation.ConfigurationActor
+import io.vamp.lifter.operation.ConfigurationActor.Get
 import io.vamp.operation.notification.InvalidConfigurationError
-import io.vamp.persistence.KeyValueStoreActor
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait ConfigurationRoute {
   this: LifterNotificationProvider with HttpApiDirectives ⇒
 
-  import LifterConfiguration.filter
-
   implicit def timeout: Timeout
-
-  implicit def namespace: Namespace
 
   implicit def actorSystem: ActorSystem
 
   implicit def executionContext: ExecutionContext
 
-  lazy val configurationRoutes: Route = {
+  def configurationRoutes(implicit namespace: Namespace): Route = {
     path("configuration" | "config") {
       get {
         parameters('static.as[Boolean] ? false) { static ⇒
@@ -51,33 +47,27 @@ trait ConfigurationRoute {
     }
   }
 
-  private def configuration(static: Boolean, kv: Boolean): Future[Map[String, Any]] = {
-    if (static) Future.successful(LifterConfiguration.static) else if (kv) {
-      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get(configurationPath()) map {
-        case Some(content: String) ⇒ Config.unmarshall(content)
-        case _                     ⇒ Map[String, Any]()
-      }
-    } else Future.successful(LifterConfiguration.dynamic)
+  private def configuration(static: Boolean, kv: Boolean)(implicit namespace: Namespace): Future[Map[String, Any]] = {
+    val actor = IoC.actorFor[ConfigurationActor]
+    val request = Get(namespace.name, static = false, dynamic = false, kv = false)
+    (
+      if (static) actor ? request.copy(static = true)
+      else if (kv) actor ? request.copy(kv = true)
+      else actor ? request.copy(dynamic = true)
+    ) map (_.asInstanceOf[Map[String, Any]])
   }
 
-  private def configuration(input: String, kv: Boolean): Future[Map[String, Any]] = try {
-    val cfg = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, filter)
-    LifterConfiguration.dynamic(cfg)
+  private def configuration(input: String, kv: Boolean)(implicit namespace: Namespace): Future[Map[String, Any]] = try {
+    val cfg = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, ConfigurationActor.filter)
 
-    if (kv) IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set(configurationPath(), if (cfg.isEmpty) None else Option(Config.marshall(cfg))) map { _ ⇒
-      actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
-      LifterConfiguration.dynamic
-    } recover {
-      case _ ⇒
+    IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Set(namespace.name, cfg) flatMap { _ ⇒
+      if (kv) IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(namespace.name) map { _ ⇒
         actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
-        LifterConfiguration.dynamic
-    }
-    else {
-      Future.successful(LifterConfiguration.dynamic)
+        cfg
+      }
+      else Future.successful(cfg)
     }
   } catch {
     case _: Exception ⇒ throwException(InvalidConfigurationError)
   }
-
-  protected def configurationPath(): List[String] = "configuration" :: Nil
 }
