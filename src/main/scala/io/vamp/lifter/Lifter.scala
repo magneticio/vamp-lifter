@@ -20,7 +20,7 @@ import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS }
 
 object Lifter extends App {
 
-  val config = ConfigFactory.load()
+  private val config = ConfigFactory.load()
 
   implicit val system: ActorSystem = ActorSystem("vamp-lifter")
   implicit val executionContext: ExecutionContext = system.dispatcher
@@ -53,7 +53,7 @@ object Lifter extends App {
     system.terminate()
   }
 
-  IoC.createActor[ConfigurationActor].flatMap { _ ? ConfigurationActor.Init(namespace) } foreach { _ ⇒ bootstrap.foreach(_.start()) }
+  IoC.createActor[ConfigurationActor](false).flatMap { _ ? ConfigurationActor.Init(namespace) } foreach { _ ⇒ bootstrap.foreach(_.start()) }
 
   def argument(name: String): Boolean = args.map(_.stripMargin('-').trim).contains(name)
 }

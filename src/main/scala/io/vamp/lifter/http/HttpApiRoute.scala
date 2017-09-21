@@ -40,7 +40,7 @@ class HttpApiRoute(implicit val actorSystem: ActorSystem, val namespace: Namespa
         pathPrefix("api") {
           encodeResponse {
             decodeRequest {
-              configurationRoutes ~ infoRoutes() ~ setupRoutes
+              configurationRoutes() ~ infoRoutes() ~ setupRoutes
             }
           }
         }

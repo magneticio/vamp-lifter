@@ -16,6 +16,8 @@ object ConfigurationActor {
 
   case class Init(namespace: Namespace)
 
+  case class Load(namespace: Namespace)
+
   case class Get(namespace: String, static: Boolean, dynamic: Boolean, kv: Boolean)
 
   case class Set(namespace: String, config: Map[String, Any])
@@ -24,7 +26,7 @@ object ConfigurationActor {
 
 }
 
-class ConfigurationActor extends CommonSupportForActors with LifterNotificationProvider {
+class ConfigurationActor(pathWithNamespace: Boolean) extends CommonSupportForActors with LifterNotificationProvider {
 
   import ConfigurationActor._
 
@@ -32,6 +34,7 @@ class ConfigurationActor extends CommonSupportForActors with LifterNotificationP
 
   def receive: Actor.Receive = {
     case i: Init ⇒ init(i.namespace)
+    case l: Load ⇒ load(l.namespace)
     case g: Get  ⇒ get(g.namespace, g.static, g.dynamic, g.kv)
     case s: Set  ⇒ set(s.namespace, s.config)
     case p: Push ⇒ push(p.namespace)
@@ -44,6 +47,20 @@ class ConfigurationActor extends CommonSupportForActors with LifterNotificationP
     sender() ! true
   }
 
+  private def load(implicit namespace: Namespace): Unit = {
+    val receiver = sender()
+    try {
+      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get(path(namespace.name)) map {
+        case Some(content: String) ⇒
+          Config.load(Config.unmarshall(content))
+          receiver ! true
+        case _ ⇒ receiver ! true
+      } recover { case _ ⇒ receiver ! true }
+    } catch {
+      case _: Exception ⇒ receiver ! true
+    }
+  }
+
   private def get(namespace: String, static: Boolean, dynamic: Boolean, kv: Boolean): Unit = {
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
@@ -52,7 +69,7 @@ class ConfigurationActor extends CommonSupportForActors with LifterNotificationP
     else if (dynamic)
       receiver ! Config.export(Config.Type.dynamic, flatten = false, filter)
     else if (kv) {
-      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get("configuration" :: Nil) map {
+      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get(path(namespace)) map {
         case Some(content: String) ⇒ receiver ! Config.unmarshall(content)
         case _                     ⇒ receiver ! Map[String, Any]()
       }
@@ -70,7 +87,7 @@ class ConfigurationActor extends CommonSupportForActors with LifterNotificationP
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
     val config = Config.export(Config.Type.dynamic, flatten = false, filter)
-    IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set("configuration" :: Nil, if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
+    IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set(path(namespace), if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
       receiver ! true
     }
   }
@@ -83,4 +100,6 @@ class ConfigurationActor extends CommonSupportForActors with LifterNotificationP
       Config.export(Config.Type.system, flatten = false, filter)
     )
   }
+
+  private def path(namespace: String): List[String] = if (pathWithNamespace) namespace :: "configuration" :: Nil else "configuration" :: Nil
 }

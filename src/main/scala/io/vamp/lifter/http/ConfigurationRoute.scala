@@ -21,16 +21,18 @@ trait ConfigurationRoute {
 
   implicit def timeout: Timeout
 
+  implicit def namespace: Namespace
+
   implicit def actorSystem: ActorSystem
 
   implicit def executionContext: ExecutionContext
 
-  def configurationRoutes(implicit namespace: Namespace): Route = {
+  def configurationRoutes(name: String = namespace.name): Route = {
     path("configuration" | "config") {
       get {
         parameters('static.as[Boolean] ? false) { static ⇒
           parameters('key_value.as[Boolean] ? false) { kv ⇒
-            onSuccess(configuration(static, kv)) { result ⇒
+            onSuccess(configuration(name, static, kv)) { result ⇒
               respondWith(OK, result)
             }
           }
@@ -38,7 +40,7 @@ trait ConfigurationRoute {
       } ~ (method(PUT) | method(POST)) {
         entity(as[String]) { request ⇒
           parameters('key_value.as[Boolean] ? false) { kv ⇒
-            onSuccess(configuration(request, kv)) { result ⇒
+            onSuccess(configuration(name, request, kv)) { result ⇒
               respondWith(Accepted, result)
             }
           }
@@ -47,9 +49,9 @@ trait ConfigurationRoute {
     }
   }
 
-  private def configuration(static: Boolean, kv: Boolean)(implicit namespace: Namespace): Future[Map[String, Any]] = {
+  private def configuration(name: String, static: Boolean, kv: Boolean): Future[Map[String, Any]] = {
     val actor = IoC.actorFor[ConfigurationActor]
-    val request = Get(namespace.name, static = false, dynamic = false, kv = false)
+    val request = Get(name, static = false, dynamic = false, kv = false)
     (
       if (static) actor ? request.copy(static = true)
       else if (kv) actor ? request.copy(kv = true)
@@ -57,12 +59,12 @@ trait ConfigurationRoute {
     ) map (_.asInstanceOf[Map[String, Any]])
   }
 
-  private def configuration(input: String, kv: Boolean)(implicit namespace: Namespace): Future[Map[String, Any]] = try {
+  private def configuration(name: String, input: String, kv: Boolean): Future[Map[String, Any]] = try {
     val cfg = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, ConfigurationActor.filter)
 
-    IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Set(namespace.name, cfg) flatMap { _ ⇒
-      if (kv) IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(namespace.name) map { _ ⇒
-        actorSystem.actorSelection(s"/user/${namespace.name}-config") ! "reload"
+    IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Set(name, cfg) flatMap { _ ⇒
+      if (kv) IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(name) map { _ ⇒
+        actorSystem.actorSelection(s"/user/$name-config") ! "reload"
         cfg
       }
       else Future.successful(cfg)
