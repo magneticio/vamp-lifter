@@ -53,7 +53,7 @@ object Lifter extends App {
     system.terminate()
   }
 
-  IoC.createActor[ConfigurationActor](false).flatMap { _ ? ConfigurationActor.Init(namespace) } foreach { _ ⇒ bootstrap.foreach(_.start()) }
+  IoC.createActor[ConfigurationActor](ConfigurationActor.filterVampNoLifter, false).flatMap { _ ? ConfigurationActor.Init(namespace) } foreach { _ ⇒ bootstrap.foreach(_.start()) }
 
   def argument(name: String): Boolean = args.map(_.stripMargin('-').trim).contains(name)
 }

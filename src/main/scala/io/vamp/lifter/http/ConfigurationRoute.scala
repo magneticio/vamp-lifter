@@ -6,9 +6,9 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 import akka.util.Timeout
+import io.vamp.common.Namespace
 import io.vamp.common.akka.IoC
 import io.vamp.common.http.HttpApiDirectives
-import io.vamp.common.{ Config, Namespace }
 import io.vamp.lifter.notification.LifterNotificationProvider
 import io.vamp.lifter.operation.ConfigurationActor
 import io.vamp.lifter.operation.ConfigurationActor.Get
@@ -59,15 +59,13 @@ trait ConfigurationRoute {
     ) map (_.asInstanceOf[Map[String, Any]])
   }
 
-  private def configuration(name: String, input: String, kv: Boolean): Future[Map[String, Any]] = try {
-    val cfg = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, ConfigurationActor.filter)
-
-    IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Set(name, cfg) flatMap { _ ⇒
+  private def configuration(name: String, input: String, kv: Boolean): Future[Any] = try {
+    IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Set(name, input) flatMap { config ⇒
       if (kv) IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(name) map { _ ⇒
         actorSystem.actorSelection(s"/user/$name-config") ! "reload"
-        cfg
+        config
       }
-      else Future.successful(cfg)
+      else Future.successful(config)
     }
   } catch {
     case _: Exception ⇒ throwException(InvalidConfigurationError)

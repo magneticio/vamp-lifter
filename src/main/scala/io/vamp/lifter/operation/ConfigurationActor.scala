@@ -12,7 +12,9 @@ import org.json4s.{ DefaultFormats, Formats }
 
 object ConfigurationActor {
 
-  val filter = ConfigFilter({ (k, _) ⇒ k.startsWith("vamp.") && !k.startsWith("vamp.lifter") })
+  val filterVamp = ConfigFilter({ (k, _) ⇒ k.startsWith("vamp.") })
+
+  val filterVampNoLifter = ConfigFilter({ (k, _) ⇒ k.startsWith("vamp.") && !k.startsWith("vamp.lifter.") })
 
   case class Init(namespace: Namespace)
 
@@ -20,13 +22,13 @@ object ConfigurationActor {
 
   case class Get(namespace: String, static: Boolean, dynamic: Boolean, kv: Boolean)
 
-  case class Set(namespace: String, config: Map[String, Any])
+  case class Set(namespace: String, config: String)
 
   case class Push(namespace: String)
 
 }
 
-class ConfigurationActor(pathWithNamespace: Boolean) extends CommonSupportForActors with LifterNotificationProvider {
+class ConfigurationActor(filter: ConfigFilter, pathWithNamespace: Boolean) extends CommonSupportForActors with LifterNotificationProvider {
 
   import ConfigurationActor._
 
@@ -76,11 +78,14 @@ class ConfigurationActor(pathWithNamespace: Boolean) extends CommonSupportForAct
     }
   }
 
-  private def set(namespace: String, config: Map[String, Any]): Unit = {
+  private def set(namespace: String, input: String): Unit = {
     val receiver = sender()
+
     implicit val ns: Namespace = Namespace(namespace)
+    val config = if (input.trim.isEmpty) Map[String, Any]() else Config.unmarshall(input.trim, filter)
+
     Config.load(config)
-    receiver ! true
+    receiver ! config
   }
 
   private def push(namespace: String): Unit = {

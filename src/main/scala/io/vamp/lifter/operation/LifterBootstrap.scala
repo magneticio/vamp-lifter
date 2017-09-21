@@ -12,7 +12,7 @@ import io.vamp.lifter.pulse.PulseInitializationActor
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: ActorSystem, override val namespace: Namespace, override val timeout: Timeout)
+class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: ActorSystem, val namespace: Namespace, override val timeout: Timeout)
     extends ActorBootstrap with VampInitialization {
 
   implicit lazy val executionContext: ExecutionContext = actorSystem.dispatcher
@@ -51,45 +51,43 @@ trait VampInitialization {
 
   implicit def timeout: Timeout
 
-  implicit def namespace: Namespace
-
   implicit def actorSystem: ActorSystem
 
   implicit def executionContext: ExecutionContext
 
-  protected def template(): Map[String, Any] = Map(
+  protected def template()(implicit namespace: Namespace): Map[String, Any] = Map(
     "key_value" → true,
     "persistence" → true,
     "pulse" → true,
     "artifacts" → Config.stringList("vamp.lifter.artifacts")().map(artifact ⇒ artifact → true).toMap
   )
 
-  protected def setup(mapping: Map[String, Any]): Future[Any] = for {
+  protected def setup(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = for {
     _ ← setupKvStore(mapping)
     _ ← setupPersistence(mapping)
     _ ← setupPulse(mapping)
     _ ← setupArtifacts(mapping)
   } yield mapping
 
-  private def setupKvStore(mapping: Map[String, Any]): Future[Any] = {
+  protected def setupKvStore(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("key_value", false).asInstanceOf[Boolean])
       IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(namespace.name)
     else Future.successful(true)
   }
 
-  private def setupPersistence(mapping: Map[String, Any]): Future[Any] = {
+  protected def setupPersistence(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("persistence", false).asInstanceOf[Boolean])
       IoC.actorFor[PersistenceInitializationActor] ? PersistenceInitializationActor.Initialize
     else Future.successful(true)
   }
 
-  private def setupPulse(mapping: Map[String, Any]): Future[Any] = {
+  protected def setupPulse(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("pulse", false).asInstanceOf[Boolean])
       IoC.actorFor[PulseInitializationActor] ? PulseInitializationActor.Initialize
     else Future.successful(true)
   }
 
-  private def setupArtifacts(mapping: Map[String, Any]): Future[Any] = {
+  protected def setupArtifacts(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     val files = mapping.getOrElse("artifacts", Map()).asInstanceOf[Map[String, Boolean]].collect {
       case (file, true) ⇒ file
     }.toList
