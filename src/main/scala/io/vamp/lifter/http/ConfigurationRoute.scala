@@ -10,8 +10,8 @@ import io.vamp.common.Namespace
 import io.vamp.common.akka.IoC
 import io.vamp.common.http.HttpApiDirectives
 import io.vamp.lifter.notification.LifterNotificationProvider
-import io.vamp.lifter.operation.ConfigurationActor
-import io.vamp.lifter.operation.ConfigurationActor.Get
+import io.vamp.lifter.operation.ConfigActor
+import io.vamp.lifter.operation.ConfigActor.Get
 import io.vamp.operation.notification.InvalidConfigurationError
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -50,7 +50,7 @@ trait ConfigurationRoute {
   }
 
   private def configuration(name: String, static: Boolean, kv: Boolean): Future[Map[String, Any]] = {
-    val actor = IoC.actorFor[ConfigurationActor]
+    val actor = IoC.actorFor[ConfigActor]
     val request = Get(name, static = false, dynamic = false, kv = false)
     (
       if (static) actor ? request.copy(static = true)
@@ -60,8 +60,8 @@ trait ConfigurationRoute {
   }
 
   private def configuration(name: String, input: String, kv: Boolean): Future[Any] = try {
-    IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Set(name, input) flatMap { config ⇒
-      if (kv) IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(name) map { _ ⇒
+    IoC.actorFor[ConfigActor] ? ConfigActor.Set(name, input) flatMap { config ⇒
+      if (kv) IoC.actorFor[ConfigActor] ? ConfigActor.Push(name) map { _ ⇒
         actorSystem.actorSelection(s"/user/$name-config") ! "reload"
         config
       }

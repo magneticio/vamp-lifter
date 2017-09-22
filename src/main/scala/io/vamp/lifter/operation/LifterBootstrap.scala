@@ -37,7 +37,7 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
       }
   }
 
-  override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Unit = {}
+  override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Future[Unit] = Future.successful(())
 
   private def sqlPersistence(): List[Future[ActorRef]] = List(IoC.createActor[PersistenceInitializationActor])
 
@@ -71,7 +71,7 @@ trait VampInitialization {
 
   protected def setupKvStore(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("key_value", false).asInstanceOf[Boolean])
-      IoC.actorFor[ConfigurationActor] ? ConfigurationActor.Push(namespace.name)
+      IoC.actorFor[ConfigActor] ? ConfigActor.Push(namespace.name)
     else Future.successful(true)
   }
 

@@ -13,29 +13,29 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 class HttpApiBootstrap extends ActorBootstrap {
 
-  private var binding: Option[Future[ServerBinding]] = None
+  private var binding: Option[ServerBinding] = None
 
   def createActors(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Future[List[ActorRef]] = Future.successful(Nil)
 
-  override def start(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Unit = {
+  override def start(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Future[Unit] = {
     super.start
     val (interface, port) = (Config.string("vamp.lifter.http-api.interface")(), Config.int("vamp.lifter.http-api.port")())
     implicit lazy val materializer: ActorMaterializer = ActorMaterializer()
     info(s"Binding API: $interface:$port")
-    binding = Option(Http().bindAndHandle(routes, interface, port))
+    implicit val executionContext: ExecutionContext = actorSystem.dispatcher
+    Http().bindAndHandle(routes, interface, port).map { handle ⇒ binding = Option(handle) }
   }
 
-  override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Unit = {}
+  override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Future[Unit] = Future.successful(())
 
   override def stop(implicit actorSystem: ActorSystem, namespace: Namespace): Future[Unit] = {
     implicit val executionContext: ExecutionContext = actorSystem.dispatcher
-    binding.map {
-      _.flatMap { server ⇒
-        info(s"Unbinding API")
-        server.unbind().flatMap {
-          _ ⇒ Http().shutdownAllConnectionPools()
-        }
-      }.flatMap { _ ⇒ super.stop }
+    binding.map { server ⇒
+      info(s"Unbinding API")
+      server.unbind().flatMap { _ ⇒
+        Http().shutdownAllConnectionPools()
+        super.stop
+      }
     } getOrElse super.stop
   }
 
