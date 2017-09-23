@@ -43,6 +43,8 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
 
   implicit lazy val timeout: Timeout = PersistenceActor.timeout()
 
+  private lazy val keyValueActor = IoC.actorFor(classOf[KeyValueStoreActor])(actorSystem, this.namespace)
+
   def receive: Actor.Receive = {
     case i: Init ⇒ init(i.namespace)
     case l: Load ⇒ load(l.namespace)
@@ -60,7 +62,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
 
   private def load(implicit namespace: Namespace): Unit = {
     val receiver = sender()
-    IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get(path(namespace.name)) map {
+    keyValueActor ? KeyValueStoreActor.Get(path(namespace.name)) map {
       case Some(content: String) ⇒ Config.load(Config.unmarshall(content))
       case _                     ⇒
     } foreach { _ ⇒ receiver ! true }
@@ -74,7 +76,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     else if (dynamic)
       receiver ! Config.export(Config.Type.dynamic, flatten = false, args.filter)
     else if (kv) {
-      IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Get(path(namespace)) map {
+      keyValueActor ? KeyValueStoreActor.Get(path(namespace)) map {
         case Some(content: String) ⇒ receiver ! Config.unmarshall(content)
         case _                     ⇒ receiver ! Map[String, Any]()
       }
@@ -100,7 +102,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
     val config = Config.export(Config.Type.dynamic, flatten = false, args.filter)
-    IoC.actorFor[KeyValueStoreActor] ? KeyValueStoreActor.Set(path(namespace), if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
+    keyValueActor ? KeyValueStoreActor.Set(path(namespace), if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
       receiver ! true
     }
   }
