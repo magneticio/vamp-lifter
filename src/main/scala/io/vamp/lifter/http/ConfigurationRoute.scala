@@ -49,7 +49,7 @@ trait ConfigurationRoute {
     }
   }
 
-  private def configuration(name: String, static: Boolean, kv: Boolean): Future[Map[String, Any]] = {
+  protected def configuration(name: String, static: Boolean, kv: Boolean): Future[Map[String, Any]] = {
     val actor = IoC.actorFor[ConfigActor]
     val request = Get(name, static = false, dynamic = false, kv = false)
     (
@@ -59,7 +59,7 @@ trait ConfigurationRoute {
     ) map (_.asInstanceOf[Map[String, Any]])
   }
 
-  private def configuration(name: String, input: String, kv: Boolean): Future[Any] = try {
+  protected def configuration(name: String, input: String, kv: Boolean): Future[Any] = try {
     IoC.actorFor[ConfigActor] ? ConfigActor.Set(name, input) flatMap { config ⇒
       if (kv) IoC.actorFor[ConfigActor] ? ConfigActor.Push(name) map { _ ⇒
         actorSystem.actorSelection(s"/user/$name-config") ! "reload"
