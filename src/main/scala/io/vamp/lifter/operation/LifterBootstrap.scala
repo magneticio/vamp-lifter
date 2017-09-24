@@ -32,10 +32,16 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
 
     Future.sequence(
       IoC.createActor[PulseInitializationActor] :: IoC.createActor[ArtifactInitializationActor] :: dbActor
-    ).flatMap {
-        list ⇒ if (initialize) setup(template()).map(_ ⇒ list) else Future.successful(list)
+    ).map { list ⇒
+        if (initialize) execute()
+        list
       }
   }
+
+  private def execute(): Unit = actorSystem.scheduler.scheduleOnce(
+    Config.duration("vamp.lifter.bootstrap.delay")(),
+    () ⇒ setup(template()): Unit
+  )(actorSystem.dispatcher)
 
   override def restart(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Future[Unit] = Future.successful(())
 
