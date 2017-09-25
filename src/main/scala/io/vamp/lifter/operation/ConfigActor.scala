@@ -7,12 +7,13 @@ import io.vamp.common.akka.{ CommonSupportForActors, IoC }
 import io.vamp.common.util.ObjectUtil
 import io.vamp.common.{ Config, ConfigFilter, Namespace }
 import io.vamp.lifter.notification.LifterNotificationProvider
+import io.vamp.operation.config.ConfigurationLoaderActor
 import io.vamp.persistence.{ KeyValueStoreActor, PersistenceActor }
 import org.json4s.{ DefaultFormats, Formats }
 
 object ConfigActor {
 
-  val configEntry = "configuration"
+  val path: List[String] = ConfigurationLoaderActor.path
 
   val filterVamp = ConfigFilter({ (k, _) ⇒ k.startsWith("vamp.") })
 
@@ -43,8 +44,6 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
 
   implicit lazy val timeout: Timeout = PersistenceActor.timeout()
 
-  private lazy val keyValueActor = IoC.actorFor(classOf[KeyValueStoreActor])(actorSystem, this.namespace)
-
   def receive: Actor.Receive = {
     case i: Init ⇒ init(i.namespace)
     case l: Load ⇒ load(l.namespace)
@@ -62,7 +61,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
 
   private def load(implicit namespace: Namespace): Unit = {
     val receiver = sender()
-    keyValueActor ? KeyValueStoreActor.Get(path(namespace.name)) map {
+    keyValueActor(namespace) ? KeyValueStoreActor.Get(path(namespace.name)) map {
       case Some(content: String) ⇒ Config.load(Config.unmarshall(content))
       case _                     ⇒
     } foreach { _ ⇒ receiver ! true }
@@ -76,7 +75,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     else if (dynamic)
       receiver ! Config.export(Config.Type.dynamic, flatten = false, args.filter)
     else if (kv) {
-      keyValueActor ? KeyValueStoreActor.Get(path(namespace)) map {
+      keyValueActor(ns) ? KeyValueStoreActor.Get(path(namespace)) map {
         case Some(content: String) ⇒ receiver ! Config.unmarshall(content)
         case _                     ⇒ receiver ! Map[String, Any]()
       }
@@ -102,7 +101,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
     val config = Config.export(Config.Type.dynamic, flatten = false, args.filter)
-    keyValueActor ? KeyValueStoreActor.Set(path(namespace), if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
+    keyValueActor(ns) ? KeyValueStoreActor.Set(path(namespace), if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
       receiver ! true
     }
   }
@@ -118,5 +117,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
 
   private def supportStatic(namespace: String): Boolean = args.supportStatic || this.namespace.name == namespace
 
-  private def path(namespace: String): List[String] = if (args.pathWithNamespace) namespace :: configEntry :: Nil else configEntry :: Nil
+  private def keyValueActor(namespace: Namespace) = IoC.actorFor(classOf[KeyValueStoreActor])(actorSystem, namespace)
+
+  private def path(namespace: String): List[String] = if (args.pathWithNamespace) namespace :: ConfigActor.path else ConfigActor.path
 }

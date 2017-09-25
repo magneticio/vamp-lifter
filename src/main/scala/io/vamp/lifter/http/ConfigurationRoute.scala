@@ -59,15 +59,22 @@ trait ConfigurationRoute {
     ) map (_.asInstanceOf[Map[String, Any]])
   }
 
-  protected def configuration(name: String, input: String, kv: Boolean): Future[Any] = try {
-    IoC.actorFor[ConfigActor] ? ConfigActor.Set(name, input) flatMap { config ⇒
-      if (kv) IoC.actorFor[ConfigActor] ? ConfigActor.Push(name) map { _ ⇒
-        actorSystem.actorSelection(s"/user/$name-config") ! "reload"
-        config
+  protected def configuration(name: String, input: String, kv: Boolean): Future[Any] = {
+    def reload(): Unit = actorSystem.actorSelection(s"/user/$name-config") ! "reload"
+
+    try {
+      IoC.actorFor[ConfigActor] ? ConfigActor.Set(name, input) flatMap { config ⇒
+        if (kv) IoC.actorFor[ConfigActor] ? ConfigActor.Push(name) map { _ ⇒
+          reload()
+          config
+        }
+        else {
+          reload()
+          Future.successful(config)
+        }
       }
-      else Future.successful(config)
+    } catch {
+      case _: Exception ⇒ throwException(InvalidConfigurationError)
     }
-  } catch {
-    case _: Exception ⇒ throwException(InvalidConfigurationError)
   }
 }
