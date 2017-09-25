@@ -1,5 +1,5 @@
 
 CREATE TABLE IF NOT EXISTS $table (
   ID SERIAL PRIMARY KEY NOT NULL,
-  Content TEXT
+  Record TEXT
 );
