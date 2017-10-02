@@ -9,7 +9,7 @@ import io.vamp.common.Config
 import io.vamp.common.akka.IoC._
 import io.vamp.common.akka.{ CommonActorLogging, CommonProvider, CommonSupportForActors }
 import io.vamp.lifter.notification.LifterNotificationProvider
-import io.vamp.model.artifact.{ DefaultBreed, Deployable }
+import io.vamp.model.artifact.{ Breed, DefaultBreed, Deployable, Workflow }
 import io.vamp.model.reader.WorkflowReader
 import io.vamp.operation.controller.{ ArtifactApiController, DeploymentApiController }
 import io.vamp.persistence.PersistenceActor
@@ -32,7 +32,7 @@ class ArtifactInitializationActor extends ArtifactLoader with CommonSupportForAc
   def receive: Actor.Receive = {
     case Load(files) ⇒
       val receiver = sender()
-      loadFiles(force = true)(Config.stringList("vamp.lifter.artifacts")().filter(files.contains)).foreach(_ ⇒ receiver ! true)
+      loadFiles()(Config.stringList("vamp.lifter.artifacts")().filter(files.contains)).foreach(_ ⇒ receiver ! true)
     case _ ⇒
   }
 }
@@ -42,44 +42,24 @@ trait ArtifactLoader extends ArtifactApiController with DeploymentApiController 
 
   implicit def timeout: Timeout
 
-  protected def loadFiles(force: Boolean = false): List[String] ⇒ Future[Any] = { files ⇒
-    val result = files.map(file ⇒ load(Paths.get(file), Source.fromFile(file).mkString, force))
+  protected def loadFiles(): List[String] ⇒ Future[Any] = { files ⇒
+    val result = files.map(file ⇒ load(Paths.get(file), Source.fromFile(file).mkString))
     Future.sequence(result)
   }
 
-  protected def load(path: Path, source: String, force: Boolean): Future[Any] = {
-
+  protected def load(path: Path, source: String): Future[Any] = {
     val `type` = path.getParent.getFileName.toString
     val fileName = path.getFileName.toString
     val name = fileName.substring(0, fileName.lastIndexOf("."))
 
-    log.info(s"Checking if artifact exists: ${`type`}/$name")
-
-    exists(`type`, name).map {
-      case true ⇒
-        if (force) {
-          log.info(s"Updating artifact: ${`type`}/$name")
-          create(`type`, fileName, name, source)
-        } else
-          log.info(s"Ignoring creation of artifact because it exists: ${`type`}/$name")
-
-      case false ⇒
-        log.info(s"Creating artifact: ${`type`}/$name")
-        create(`type`, fileName, name, source)
-    }
-  }
-
-  protected def exists(`type`: String, name: String): Future[Boolean] = {
-    readArtifact(`type`, name, expandReferences = false, onlyReferences = false).map {
-      case Some(_) ⇒ true
-      case _       ⇒ false
-    }
+    log.info(s"Persisting artifact: ${`type`}/$name")
+    create(`type`, fileName, name, source)
   }
 
   protected def create(`type`: String, fileName: String, name: String, source: String): Future[Any] = {
-    if (`type` == "breeds" && fileName.endsWith(".js"))
+    if (`type` == Breed.kind && fileName.endsWith(".js"))
       actorFor[PersistenceActor] ? PersistenceActor.Update(DefaultBreed(name, Map(), Deployable("application/javascript", source), Nil, Nil, Nil, Nil, Map(), None), Some(source))
-    else if (`type` == "workflows")
+    else if (`type` == Workflow.kind)
       actorFor[PersistenceActor] ? PersistenceActor.Update(WorkflowReader.read(source), Some(source))
     else
       updateArtifact(`type`, name, source, validateOnly = false)
