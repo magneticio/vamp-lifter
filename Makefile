@@ -19,6 +19,8 @@ endif
 TARGET  := $(CURDIR)/target
 VERSION := $(shell git describe --tags)
 
+FULL_VERSION=$(shell git describe --tags)
+
 # Targets
 .PHONY: all
 all: default
@@ -83,14 +85,17 @@ pack:
 
 pack-local:
 	export VAMP_VERSION="katana" && sbt package publish-local pack
-	rm -rf $(TARGET)/vamp-lifter-$(VERSION)
-	mkdir -p $(TARGET)/vamp-lifter-$(VERSION)
-	cp -r $(TARGET)/pack/lib $(TARGET)/vamp-lifter-$(VERSION)/
+	rm -rf $(TARGET)/vamp-lifter-$(FULL_VERSION)
+	mkdir -p $(TARGET)/vamp-lifter-$(FULL_VERSION)
+	cp -r $(TARGET)/pack/lib $(TARGET)/vamp-lifter-$(FULL_VERSION)/
 	mv $$(find $(TARGET)/vamp-lifter-$(VERSION)/lib -type f -name "vamp-*-katana.jar") $(TARGET)/vamp-lifter-$(VERSION)/
 
+	docker volume create packer
+	docker pull $(BUILD_SERVER)
 	docker run \
+		--name packer \
 		--rm \
-		--volume $(TARGET)/vamp-lifter-$(VERSION):/usr/local/src \
+		--volume $(TARGET)/vamp-lifter-$(FULL_VERSION):/usr/local/src \
 		--volume packer:/usr/local/stash \
 		$(BUILD_SERVER) \
-			push vamp-lifter $(VERSION)
+			push vamp-lifter $(FULL_VERSION)
