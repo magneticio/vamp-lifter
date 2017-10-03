@@ -45,7 +45,7 @@ object Lifter extends App {
       new RestartableActorBootstrap(namespace)(
         new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: new GatewayDriverBootstrap :: new WorkflowDriverBootstrap :: Nil
       ) :+
-      new ActorBootstrap(new LifterBootstrap(argument("initialize")) :: new HttpApiBootstrap :: Nil)
+      new ActorBootstrap(new LifterBootstrap :: new HttpApiBootstrap :: Nil)
   }
 
   sys.addShutdownHook {
@@ -54,6 +54,4 @@ object Lifter extends App {
   }
 
   IoC.createActor[ConfigActor](ConfigActorArgs()) flatMap { _ ? ConfigActor.Init(namespace) } foreach { _ ⇒ bootstrap.foreach(_.start()) }
-
-  def argument(name: String): Boolean = args.map(_.stripMargin('-').trim).contains(name)
 }

@@ -14,12 +14,13 @@ import io.vamp.persistence.PersistenceActor
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: ActorSystem, val namespace: Namespace, override val timeout: Timeout)
+class LifterBootstrap(implicit override val actorSystem: ActorSystem, val namespace: Namespace, override val timeout: Timeout)
     extends ActorBootstrap with VampInitialization {
 
   implicit lazy val executionContext: ExecutionContext = actorSystem.dispatcher
 
   def createActors(implicit actorSystem: ActorSystem, namespace: Namespace, timeout: Timeout): Future[List[ActorRef]] = {
+    val initialize = Config.boolean("vamp.lifter.auto-initialize")()
     val db = Config.string("vamp.persistence.database.type")().toLowerCase
 
     logger.info(s"database: $db")
@@ -50,7 +51,7 @@ class LifterBootstrap(initialize: Boolean)(implicit override val actorSystem: Ac
             val db = m.asInstanceOf[Map[String, Map[String, Any]]].getOrElse("database", Map[String, Any]())
             db.getOrElse("records", 0) match {
               case i: Int if i == 0 ⇒ setup(artifacts)
-              case _                ⇒ logger.info("Skipping artifact creation because DB is not empty.")
+              case _                ⇒ logger.info("Skipping artifact creation because DB contains already some records.")
             }
           case _ ⇒ logger.error("Cannot retrieve DB record count!")
         }
