@@ -1,6 +1,6 @@
 package io.vamp.lifter.operation
 
-import akka.actor.Actor
+import akka.actor.{ Actor, ActorRef }
 import akka.pattern.ask
 import akka.util.Timeout
 import io.vamp.common.akka.{ CommonSupportForActors, IoC }
@@ -53,13 +53,13 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     case _       ⇒
   }
 
-  private def init(implicit namespace: Namespace): Unit = {
+  protected def init(implicit namespace: Namespace): Unit = {
     Config.load()
     if (supportStatic(namespace.name)) Config.load(static)
     sender() ! true
   }
 
-  private def load(implicit namespace: Namespace): Unit = {
+  protected def load(implicit namespace: Namespace): Unit = {
     val receiver = sender()
     keyValueActor(namespace) ? KeyValueStoreActor.Get(path(namespace.name)) map {
       case Some(content: String) ⇒ Config.load(Config.unmarshall(content))
@@ -67,7 +67,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     } foreach { _ ⇒ receiver ! true }
   }
 
-  private def get(namespace: String, static: Boolean, dynamic: Boolean, kv: Boolean): Unit = {
+  protected def get(namespace: String, static: Boolean, dynamic: Boolean, kv: Boolean): Unit = {
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
     if (static && supportStatic(namespace))
@@ -82,7 +82,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     } else receiver ! Map[String, Any]()
   }
 
-  private def set(namespace: String, input: String): Unit = {
+  protected def set(namespace: String, input: String): Unit = {
     val receiver = sender()
 
     implicit val ns: Namespace = Namespace(namespace)
@@ -97,7 +97,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     receiver ! config
   }
 
-  private def push(namespace: String): Unit = {
+  protected def push(namespace: String): Unit = {
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
     val config = Config.export(Config.Type.dynamic, flatten = false, args.filter)
@@ -106,7 +106,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     }
   }
 
-  private def static(implicit namespace: Namespace): Map[String, Any] = {
+  protected def static(implicit namespace: Namespace): Map[String, Any] = {
     implicit val formats: Formats = DefaultFormats
     ObjectUtil.merge(
       Config.export(Config.Type.application, flatten = false, args.filter),
@@ -115,9 +115,9 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
     )
   }
 
-  private def supportStatic(namespace: String): Boolean = args.supportStatic || this.namespace.name == namespace
+  protected def supportStatic(namespace: String): Boolean = args.supportStatic || this.namespace.name == namespace
 
-  private def keyValueActor(namespace: Namespace) = IoC.actorFor(classOf[KeyValueStoreActor])(actorSystem, namespace)
+  protected def keyValueActor(namespace: Namespace): ActorRef = IoC.actorFor(classOf[KeyValueStoreActor])(actorSystem, namespace)
 
-  private def path(namespace: String): List[String] = if (args.pathWithNamespace) namespace :: ConfigActor.path else ConfigActor.path
+  protected def path(namespace: String): List[String] = if (args.pathWithNamespace) namespace :: ConfigActor.path else ConfigActor.path
 }
