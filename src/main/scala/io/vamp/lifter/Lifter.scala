@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import io.vamp.bootstrap.{ ActorBootstrap, LoggingBootstrap, RestartableActorBootstrap }
+import io.vamp.bootstrap.{ ActorBootstrap, LoggingBootstrap, RestartableActorBootstrap, VampApp }
 import io.vamp.common.Namespace
 import io.vamp.common.akka.IoC
 import io.vamp.container_driver.ContainerDriverBootstrap
@@ -18,7 +18,7 @@ import io.vamp.workflow_driver.WorkflowDriverBootstrap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS }
 
-object Lifter extends App {
+object Lifter extends VampApp {
 
   private val config = ConfigFactory.load()
 
@@ -27,7 +27,7 @@ object Lifter extends App {
   implicit val namespace: Namespace = Namespace(config.getString("vamp.namespace"))
   implicit val timeout: Timeout = Timeout(FiniteDuration(config.getDuration("vamp.lifter.bootstrap.timeout", MILLISECONDS), MILLISECONDS))
 
-  protected lazy val bootstrap = {
+  protected lazy val bootstraps = {
     List() :+
       new LoggingBootstrap {
         lazy val logo: String =
@@ -48,10 +48,7 @@ object Lifter extends App {
       new ActorBootstrap(new LifterBootstrap :: new HttpApiBootstrap :: Nil)
   }
 
-  sys.addShutdownHook {
-    bootstrap.reverse.foreach(_.stop())
-    system.terminate()
-  }
+  addShutdownBootstrapHook()
 
-  IoC.createActor[ConfigActor](ConfigActorArgs()) flatMap { _ ? ConfigActor.Init(namespace) } foreach { _ ⇒ bootstrap.foreach(_.start()) }
+  IoC.createActor[ConfigActor](ConfigActorArgs()).flatMap(_ ? ConfigActor.Init(namespace)).flatMap(_ ⇒ startBootstraps())
 }
