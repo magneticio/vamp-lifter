@@ -31,11 +31,14 @@ object ConfigActor {
 
 }
 
+case class ConfigFilterWithNamespaceContext(filterFunction: (String, Any, Namespace) ⇒ Boolean)
+
 case class ConfigActorArgs(
-  filter:            ConfigFilter = ConfigActor.filterVampNoLifter,
-  supportStatic:     Boolean      = true,
-  overrideNamespace: Boolean      = false,
-  pathWithNamespace: Boolean      = false
+  filter:               ConfigFilter                     = ConfigActor.filterVampNoLifter,
+  filterForPersistence: ConfigFilterWithNamespaceContext = ConfigFilterWithNamespaceContext((_, _, _) ⇒ true),
+  supportStatic:        Boolean                          = true,
+  overrideNamespace:    Boolean                          = false,
+  pathWithNamespace:    Boolean                          = false
 )
 
 class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with LifterNotificationProvider {
@@ -100,8 +103,11 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
   protected def push(namespace: String): Unit = {
     val receiver = sender()
     implicit val ns: Namespace = Namespace(namespace)
-    val config = Config.export(Config.Type.dynamic, flatten = false, args.filter)
-    keyValueActor(ns) ? KeyValueStoreActor.Set(path(namespace), if (config.isEmpty) None else Option(Config.marshall(config))) foreach { _ ⇒
+    val config = Config.export(Config.Type.dynamic, flatten = true, args.filter)
+    val configThatWePersist = config.filter(keyValuePair ⇒
+      args.filterForPersistence.filterFunction(keyValuePair._1, keyValuePair._2, ns)
+    )
+    keyValueActor(ns) ? KeyValueStoreActor.Set(path(namespace), if (configThatWePersist.isEmpty) None else Option(Config.marshall(configThatWePersist))) foreach { _ ⇒
       receiver ! true
     }
   }
