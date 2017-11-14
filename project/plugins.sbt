@@ -1,6 +1,6 @@
 resolvers += Resolver.url(
   "bintray-sbt-plugin-releases",
-  url("http://dl.bintray.com/content/sbt/sbt-plugin-releases"))(
+  url("https://dl.bintray.com/content/sbt/sbt-plugin-releases"))(
     Resolver.ivyStylePatterns)
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.8.0")
