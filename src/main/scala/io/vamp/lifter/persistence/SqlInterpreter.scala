@@ -4,6 +4,7 @@ import java.sql.{ Connection, DriverManager, ResultSet, Statement }
 
 import cats.data.{ EitherT, Kleisli }
 import cats.~>
+import io.vamp.persistence.sqlconnectionpool.ConnectionPool
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -43,7 +44,7 @@ object SqlInterpreter {
     val connectionUrl = if (default) sls.vampDatabaseUrl else sls.createUrl
 
     tryToEitherT(
-      DriverManager.getConnection(connectionUrl, sls.user, sls.password),
+      ConnectionPool(connectionUrl, sls.user, sls.password).getConnection,
       t ⇒ s"Unable to get connection to the database: ${t.getMessage}")
   }
 
@@ -104,6 +105,7 @@ object SqlInterpreter {
         sqlDSL match {
           case GetConnection(default) ⇒
             tryToEitherT(
+              // TODO: add connection pool for sql lite
               DriverManager.getConnection(sls.vampDatabaseUrl),
               t ⇒ s"Unable to get connection to the database: ${t.getMessage}")
           case CloseConnection(connection)                   ⇒ executeCloseConnection(connection)
@@ -131,7 +133,7 @@ object SqlInterpreter {
       }
 
       if (!dbExists) {
-        val connection = DriverManager.getConnection(sls.vampDatabaseUrl, sls.user, sls.password)
+        val connection = ConnectionPool(sls.vampDatabaseUrl, sls.user, sls.password).getConnection
         try {
           val statement = connection.createStatement()
           try {

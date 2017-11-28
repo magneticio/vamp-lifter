@@ -84,12 +84,10 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
         tablesCreated ← createTables(tableQueries)
       } yield databaseCreated && tablesCreated
 
-
       val executeSqlActions: Kleisli[LifterResult, SqlLifterSeed, Boolean] =
         sqlInitCommand
           .foldMap[SqlAction](sqlInterpreter)
           .foldMap[SqlResult](sqlDialectInterpreter)
-
 
       val result = Await.result(executeSqlActions(sqlLifterSeed).value, 10.seconds)
       result match {
