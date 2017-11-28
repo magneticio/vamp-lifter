@@ -11,9 +11,7 @@ import io.vamp.lifter.persistence.LifterPersistenceDSL.{ LiftAction, _ }
 import io.vamp.lifter.persistence.SqlDSL._
 import io.vamp.lifter.persistence.SqlInterpreter.{ LifterResult, SqlResult }
 
-import scala.concurrent.Await
 import scala.io.Source
-import scala.concurrent.duration._
 
 class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> SqlResult, val sqlResource: String) extends PersistenceInitializationActor {
 
@@ -84,14 +82,12 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
         tablesCreated ← createTables(tableQueries)
       } yield databaseCreated && tablesCreated
 
-
       val executeSqlActions: Kleisli[LifterResult, SqlLifterSeed, Boolean] =
         sqlInitCommand
           .foldMap[SqlAction](sqlInterpreter)
           .foldMap[SqlResult](sqlDialectInterpreter)
 
-
-      val result = Await.result(executeSqlActions(sqlLifterSeed).value, 10.seconds)
+      val result = LifterPersistenceDSL.safeAwait(executeSqlActions(sqlLifterSeed).value, log)
       result match {
         case Left(errorMessage) ⇒ reportException(PersistenceInitializationFailure(errorMessage))
         case Right(_) ⇒

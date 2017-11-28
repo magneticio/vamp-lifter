@@ -1,11 +1,15 @@
 package io.vamp.lifter.persistence
 
+import akka.event.LoggingAdapter
 import cats.free._
 import cats.~>
 import io.vamp.lifter.persistence.SqlDSL._
 import cats.implicits.catsStdInstancesForList
 import cats.implicits.toTraverseOps
 
+import scala.concurrent.{ Await, Future, TimeoutException }
+import scala.util.{ Failure, Success, Try }
+import scala.concurrent.duration._
 /**
  * Describes the lifting action of persistence in pure data
  */
@@ -20,6 +24,17 @@ case object CreateDatabase extends LifterPersistenceDSL[Boolean]
 case class CreateTables(tableQueries: List[String]) extends LifterPersistenceDSL[Boolean]
 
 object LifterPersistenceDSL {
+
+  def safeAwait[T](action: ⇒ Future[T], logger: LoggingAdapter): T = {
+    Try(Await.result(action, 10.seconds)) match {
+      case Success(s) ⇒ s
+      case Failure(f: TimeoutException) ⇒ {
+        logger.error(s"Timeout after 10 seconds at initialization; Stack Trace: ${f.getStackTrace}")
+        throw f
+      }
+      case Failure(x) ⇒ throw x
+    }
+  }
 
   type LiftAction[A] = Free[LifterPersistenceDSL, A]
 
