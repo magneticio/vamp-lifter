@@ -2,3 +2,4 @@ conf/application*
 target
 project/project/
 /Makefile.local
+/local.sh
