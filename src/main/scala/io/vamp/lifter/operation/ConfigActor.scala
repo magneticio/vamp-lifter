@@ -8,8 +8,9 @@ import io.vamp.common.util.ObjectUtil
 import io.vamp.common.{ Config, ConfigFilter, Namespace }
 import io.vamp.lifter.notification.LifterNotificationProvider
 import io.vamp.operation.config.ConfigurationLoaderActor
-import io.vamp.persistence.{ KeyValueStoreActor, PersistenceActor }
+import io.vamp.persistence.{ KeyValueStoreActor }
 import org.json4s.{ DefaultFormats, Formats }
+import scala.concurrent.duration._
 
 object ConfigActor {
 
@@ -45,7 +46,7 @@ class ConfigActor(args: ConfigActorArgs) extends CommonSupportForActors with Lif
 
   import ConfigActor._
 
-  implicit lazy val timeout: Timeout = PersistenceActor.timeout()
+  implicit lazy val timeout: Timeout = Timeout(5.second)
 
   def receive: Actor.Receive = {
     case i: Init ⇒ init(i.namespace)

@@ -1,20 +1,20 @@
 package io.vamp.lifter.artifact
 
-import java.nio.file.{ Path, Paths }
+import java.nio.file.{Path, Paths}
 
 import akka.actor.Actor
-import akka.pattern.ask
 import akka.util.Timeout
-import io.vamp.common.Config
-import io.vamp.common.akka.IoC._
-import io.vamp.common.akka.{ CommonActorLogging, CommonProvider, CommonSupportForActors }
+import io.vamp.common.akka.{CommonActorLogging, CommonProvider, CommonSupportForActors}
+import io.vamp.common.{Config, RootAnyMap}
 import io.vamp.lifter.notification.LifterNotificationProvider
-import io.vamp.model.artifact.{ Breed, DefaultBreed, Deployable, Workflow }
+import io.vamp.model.artifact.{Breed, DefaultBreed, Deployable, Workflow}
 import io.vamp.model.reader.WorkflowReader
-import io.vamp.operation.controller.{ ArtifactApiController, DeploymentApiController }
-import io.vamp.persistence.PersistenceActor
+import io.vamp.operation.controller.{ArtifactApiController, DeploymentApiController}
+import io.vamp.persistence.refactor.VampPersistence
+import io.vamp.persistence.refactor.serialization.VampJsonFormats
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.io.Source
 
 object ArtifactInitializationActor {
@@ -27,7 +27,7 @@ class ArtifactInitializationActor extends ArtifactLoader with CommonSupportForAc
 
   import ArtifactInitializationActor._
 
-  implicit lazy val timeout: Timeout = PersistenceActor.timeout()
+  implicit lazy val timeout: Timeout = Timeout(5.second)
 
   def receive: Actor.Receive = {
     case Load(files) ⇒
@@ -37,7 +37,7 @@ class ArtifactInitializationActor extends ArtifactLoader with CommonSupportForAc
   }
 }
 
-trait ArtifactLoader extends ArtifactApiController with DeploymentApiController {
+trait ArtifactLoader extends ArtifactApiController with DeploymentApiController with VampJsonFormats {
   this: CommonActorLogging with CommonProvider ⇒
 
   implicit def timeout: Timeout
@@ -57,11 +57,13 @@ trait ArtifactLoader extends ArtifactApiController with DeploymentApiController 
   }
 
   protected def create(`type`: String, fileName: String, name: String, source: String): Future[Any] = {
-    if (`type` == Breed.kind && fileName.endsWith(".js"))
-      actorFor[PersistenceActor] ? PersistenceActor.Update(DefaultBreed(name, Map(), Deployable("application/javascript", source), Nil, Nil, Nil, Nil, Map(), None), Some(source))
-    else if (`type` == Workflow.kind)
-      actorFor[PersistenceActor] ? PersistenceActor.Update(WorkflowReader.read(source), Some(source))
-    else
+    if (`type` == Breed.kind && fileName.endsWith(".js")) {
+      val newBreed = DefaultBreed(name, RootAnyMap.empty, Deployable("application/javascript", source), Nil, Nil, Nil, Nil, Map(), None)
+      VampPersistence().createOrUpdate[Breed](newBreed)
+    } else if (`type` == Workflow.kind) {
+      val newWorkflow = WorkflowReader.read(source)
+      VampPersistence().createOrUpdate[Workflow](newWorkflow)
+    } else
       updateArtifact(`type`, name, source, validateOnly = false)
   }
 }

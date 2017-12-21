@@ -10,7 +10,6 @@ import io.vamp.lifter.artifact.ArtifactInitializationActor
 import io.vamp.lifter.persistence.SqlInterpreter.SqlInterpreter
 import io.vamp.lifter.persistence.{ PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor }
 import io.vamp.lifter.pulse.PulseInitializationActor
-import io.vamp.persistence.PersistenceActor
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -46,15 +45,7 @@ class LifterBootstrap(implicit override val actorSystem: ActorSystem, val namesp
     () ⇒ {
       val (drivers, artifacts) = template().partition(_._1 != "artifacts")
       setup(drivers).foreach { _ ⇒
-        IoC.actorFor[PersistenceActor] ? InfoRequest map {
-          case m: Map[_, _] ⇒
-            val db = m.asInstanceOf[Map[String, Map[String, Any]]].getOrElse("database", Map[String, Any]())
-            db.getOrElse("records", 0) match {
-              case i: Int if i == 0 ⇒ setup(artifacts)
-              case _                ⇒ logger.info("Skipping artifact creation because DB contains already some records.")
-            }
-          case _ ⇒ logger.error("Cannot retrieve DB record count!")
-        }
+        setup(artifacts)
       }
     }: Unit
   )(actorSystem.dispatcher)
@@ -64,8 +55,9 @@ class LifterBootstrap(implicit override val actorSystem: ActorSystem, val namesp
   private def sqlPersistence(): List[Future[ActorRef]] = List(IoC.createActor[PersistenceInitializationActor])
 
   private def sqlPersistence(interpreter: SqlInterpreter, resource: String): List[Future[ActorRef]] = {
-    IoC.alias[PersistenceInitializationActor, SqlPersistenceInitializationActor]
-    List(IoC.createActor[SqlPersistenceInitializationActor](interpreter, resource))
+    //IoC.alias[PersistenceInitializationActor, SqlPersistenceInitializationActor]
+    //List(IoC.createActor[SqlPersistenceInitializationActor](interpreter, resource))
+    Nil
   }
 }
 

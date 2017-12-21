@@ -6,7 +6,7 @@ import akka.util.Timeout
 import io.vamp.common.Namespace
 import io.vamp.common.http.HttpApiDirectives
 import io.vamp.lifter.notification.LifterNotificationProvider
-import io.vamp.operation.controller.InfoController
+import io.vamp.operation.controller.utilcontroller.InfoController
 
 trait InfoRoute extends InfoController {
   this: LifterNotificationProvider with HttpApiDirectives ⇒
