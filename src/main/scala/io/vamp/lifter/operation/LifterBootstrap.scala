@@ -1,17 +1,19 @@
 package io.vamp.lifter.operation
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import io.vamp.common.akka.{ ActorBootstrap, IoC }
+import io.vamp.common.akka.{ActorBootstrap, IoC}
 import io.vamp.common.vitals.InfoRequest
-import io.vamp.common.{ Config, Namespace }
+import io.vamp.common.{Config, Namespace}
 import io.vamp.lifter.artifact.ArtifactInitializationActor
 import io.vamp.lifter.persistence.SqlInterpreter.SqlInterpreter
-import io.vamp.lifter.persistence.{ PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor }
+import io.vamp.lifter.persistence.{PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor}
 import io.vamp.lifter.pulse.PulseInitializationActor
+import io.vamp.model.artifact.Workflow
+import io.vamp.persistence.refactor.VampPersistence
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class LifterBootstrap(implicit override val actorSystem: ActorSystem, val namespace: Namespace, override val timeout: Timeout)
     extends ActorBootstrap with VampInitialization {
@@ -91,7 +93,7 @@ trait VampInitialization {
 
   protected def setupPersistence(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("persistence", false).asInstanceOf[Boolean])
-      IoC.actorFor[PersistenceInitializationActor] ? PersistenceInitializationActor.Initialize
+      VampPersistence().init()// Dummy call to persistence to initialize it
     else Future.successful(true)
   }
 
