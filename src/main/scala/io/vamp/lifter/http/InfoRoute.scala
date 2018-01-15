@@ -27,8 +27,6 @@ trait InfoRoute extends InfoController {
     }
   }
 
-
-
   override protected def infoActors(on: Set[String]): List[Class[Actor]] = {
     val list = if (on.isEmpty) {
       List(
@@ -36,8 +34,7 @@ trait InfoRoute extends InfoController {
         classOf[PulseActor],
         classOf[ContainerDriverActor]
       )
-    }
-    else on.map(_.toLowerCase).collect {
+    } else on.map(_.toLowerCase).collect {
       case "key_value"        ⇒ classOf[KeyValueStoreActor]
       case "pulse"            ⇒ classOf[PulseActor]
       case "container_driver" ⇒ classOf[ContainerDriverActor]

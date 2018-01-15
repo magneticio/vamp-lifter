@@ -1,15 +1,15 @@
 package io.vamp.lifter.artifact
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.{ Path, Paths }
 
 import akka.actor.Actor
 import akka.util.Timeout
-import io.vamp.common.akka.{CommonActorLogging, CommonProvider, CommonSupportForActors}
-import io.vamp.common.{Config, RootAnyMap}
+import io.vamp.common.akka.{ CommonActorLogging, CommonProvider, CommonSupportForActors }
+import io.vamp.common.{ Config, RootAnyMap }
 import io.vamp.lifter.notification.LifterNotificationProvider
-import io.vamp.model.artifact.{Breed, DefaultBreed, Deployable, Workflow}
+import io.vamp.model.artifact.{ Breed, DefaultBreed, Deployable, Workflow }
 import io.vamp.model.reader.WorkflowReader
-import io.vamp.operation.controller.{ArtifactApiController, DeploymentApiController}
+import io.vamp.operation.controller.{ ArtifactApiController, DeploymentApiController }
 import io.vamp.persistence.refactor.VampPersistence
 import io.vamp.persistence.refactor.serialization.VampJsonFormats
 
