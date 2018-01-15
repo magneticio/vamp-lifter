@@ -43,7 +43,7 @@ object Lifter extends VampApp {
              |""".stripMargin
       } :+
       new RestartableActorBootstrap(namespace)(
-        new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: new GatewayDriverBootstrap :: new WorkflowDriverBootstrap :: Nil
+        new PersistenceBootstrap :: new PulseBootstrap :: new ContainerDriverBootstrap :: Nil
       ) :+
       new ActorBootstrap(new LifterBootstrap :: new HttpApiBootstrap :: Nil)
   }
