@@ -5,7 +5,7 @@ import cats.data.Kleisli
 import cats.implicits.{ catsStdInstancesForList, toTraverseOps }
 import cats.instances.future.catsStdInstancesForFuture
 import cats.~>
-import io.vamp.common.{ Config, Namespace }
+import io.vamp.common.Config
 import io.vamp.lifter.notification.{ PersistenceInitializationFailure, PersistenceInitializationSuccess }
 import io.vamp.lifter.persistence.LifterPersistenceDSL.{ LiftAction, _ }
 import io.vamp.lifter.persistence.SqlDSL._
@@ -42,15 +42,15 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
       val db = Config.string("vamp.persistence.database.sql.database")()
       val table = Config.string("vamp.persistence.database.sql.table")()
 
-      val urlNs = resolveWithVariables(url, connectionVariables())
-      if (urlNs._2.get("namespace").isDefined) (
+      val urlNs = resolveWithOptionalNamespace(url)
+      if (urlNs._2.isDefined) (
         urlNs._1,
         resolveWithNamespace(db),
-        resolveWithVariables(table, connectionVariables())._1
+        resolveWithOptionalNamespace(table)._1
       )
       else (
         urlNs._1,
-        resolveWithVariables(db, connectionVariables())._1, // strict check would be to require no namespace
+        resolveWithOptionalNamespace(db)._1, // strict check would be to require no namespace
         resolveWithNamespace(table)
       )
     }
@@ -112,6 +112,4 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
       }
     }
   }
-
-  protected def connectionVariables()(implicit namespace: Namespace): Map[String, String] = Map("namespace" → namespace.name)
 }
