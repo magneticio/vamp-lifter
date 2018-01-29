@@ -25,7 +25,7 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
       sender() ! Initialized
     } else {
       log.info(s"Performing Init-Steps for SQL Persistence ${namespace.name}")
-      doInitialization(sender());
+      doInitialization(sender())
       log.info(s"Finished Init-Steps for SQL Persistence ${namespace.name}")
       initialized = true
       sender() ! Initialized
@@ -35,10 +35,26 @@ class SqlPersistenceInitializationActor(val sqlDialectInterpreter: SqlDSL ~> Sql
 
   def doInitialization(senderContext: ActorRef): Unit = {
     val receiver = senderContext
-    val url = resolveWithNamespace(Config.string("vamp.persistence.database.sql.url")())
     val vampDatabaseUrl = Config.string("vamp.persistence.database.sql.database-server-url")()
-    val db = resolveWithNamespace(Config.string("vamp.persistence.database.sql.database")())
-    val table = Config.string("vamp.persistence.database.sql.table")()
+
+    val (url, db, table) = {
+      val url = Config.string("vamp.persistence.database.sql.url")()
+      val db = Config.string("vamp.persistence.database.sql.database")()
+      val table = Config.string("vamp.persistence.database.sql.table")()
+
+      val urlNs = resolveWithOptionalNamespace(url)
+      if (urlNs._2.isDefined) (
+        urlNs._1,
+        resolveWithNamespace(db),
+        resolveWithOptionalNamespace(table)._1
+      )
+      else (
+        urlNs._1,
+        resolveWithOptionalNamespace(db)._1, // strict check would be to require no namespace
+        resolveWithNamespace(table)
+      )
+    }
+
     val user = Config.string("vamp.persistence.database.sql.user")()
     val password = Config.string("vamp.persistence.database.sql.password")()
     val sqlLifterSeed = SqlLifterSeed(db, user, password, url, vampDatabaseUrl)

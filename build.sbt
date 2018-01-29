@@ -20,10 +20,11 @@ scalariformSettings ++ Seq(ScalariformKeys.preferences := ScalariformKeys.prefer
   .setPreference(RewriteArrowSymbols, true))
 
 // Libraries
-val akka = "com.typesafe.akka" %% "akka-actor" % "2.4.16" ::
-  "com.typesafe.akka" %% "akka-http" % "10.0.3" ::
-  "com.typesafe.akka" %% "akka-parsing" % "10.0.3" ::
-  ("com.typesafe.akka" %% "akka-slf4j" % "2.4.16" exclude("org.slf4j", "slf4j-api")) :: Nil
+val akka = "com.typesafe.akka" %% "akka-stream" % "2.5.9" ::
+  "com.typesafe.akka" %% "akka-actor" % "2.5.9" ::
+  "com.typesafe.akka" %% "akka-http" % "10.0.11" ::
+  "com.typesafe.akka" %% "akka-parsing" % "10.0.11" ::
+  ("com.typesafe.akka" %% "akka-slf4j" % "2.5.9" exclude("org.slf4j", "slf4j-api")) :: Nil
 
 val json4s = "org.json4s" %% "json4s-native" % "3.5.0" ::
   "org.json4s" %% "json4s-core" % "3.5.0" ::
