@@ -1,20 +1,20 @@
 package io.vamp.lifter.operation
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.pattern.ask
 import akka.util.Timeout
-import io.vamp.common.akka.{ActorBootstrap, IoC}
-import io.vamp.common.{Config, Namespace}
+import io.vamp.common.akka.{ ActorBootstrap, IoC }
+import io.vamp.common.{ Config, Namespace }
 import io.vamp.lifter.artifact.ArtifactInitializationActor
 import io.vamp.lifter.persistence.SqlInterpreter.SqlInterpreter
-import io.vamp.lifter.persistence.{PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor}
+import io.vamp.lifter.persistence.{ PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor }
 import io.vamp.lifter.pulse.PulseInitializationActor
 import io.vamp.model.artifact.Workflow
 import io.vamp.model.event.Event
 import io.vamp.persistence.refactor.VampPersistence
 import io.vamp.pulse.PulseActor
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class LifterBootstrap(implicit override val actorSystem: ActorSystem, val namespace: Namespace, override val timeout: Timeout)
     extends ActorBootstrap with VampInitialization {
@@ -100,7 +100,7 @@ trait VampInitialization {
 
   protected def setupPulse(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("pulse", false).asInstanceOf[Boolean])
-      (IoC.actorFor[PulseInitializationActor] ? PulseInitializationActor.Initialize).flatMap(_ =>
+      (IoC.actorFor[PulseInitializationActor] ? PulseInitializationActor.Initialize).flatMap(_ ⇒
         (IoC.actorFor[PulseActor] ? PulseActor.Publish(Event(tags = Set("lifter-init"), value = "Lifter-Initialization")))
       )
     else Future.successful(true)
