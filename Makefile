@@ -5,11 +5,12 @@ SHELL             := bash
 .DELETE_ON_ERROR  :
 .SUFFIXES         :
 
-STASH     := stash
-PROJECT   := vamp-lifter
-VERSION   := $(shell git describe --tags)
-FABRICATOR:= magneticio/fabricator:jdk_8u162_scala_2.12.1_sbt_0.13.13
-TARGET    := $$HOME/.stash/$(PROJECT)
+STASH       := stash
+PROJECT     := vamp-lifter
+PROJECT_DIR := $(CURDIR)
+VERSION     := $(shell git describe --tags)
+FABRICATOR  := magneticio/fabricator:jdk_8u162_scala_2.12.1_sbt_0.13.13
+TARGET      := $$HOME/.stash/$(PROJECT)
 
 # if Makefile.local exists, include it.
 ifneq ("$(wildcard Makefile.local)", "")
@@ -37,8 +38,8 @@ build:
 	docker run \
          --rm \
          --volume $(STASH):/root \
-         --volume $(CURDIR):/$(PROJECT) \
-         --workdir=/$(PROJECT) -it \
+         --volume $(PROJECT_DIR):/$(PROJECT) \
+         --workdir=/$(PROJECT) \
          $(FABRICATOR) make local stash
 
 .PHONY: default
