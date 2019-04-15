@@ -7,7 +7,7 @@ import io.vamp.common.NamespaceProvider
 import io.vamp.common.notification.NotificationProvider
 import io.vamp.lifter.pulse.ElasticsearchPulseInitializationActor.TemplateDefinition
 import io.vamp.model.resolver.NamespaceValueResolver
-import io.vamp.pulse.{ ElasticsearchClient, ElasticsearchPulseActor, ElasticsearchPulseEvent }
+import io.vamp.pulse.{ ElasticsearchClientAdapter, ElasticsearchPulseActor, ElasticsearchPulseEvent }
 
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.io.Source
@@ -27,7 +27,7 @@ trait ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with
 
   implicit def executionContext: ExecutionContext
 
-  private lazy val esClient = new ElasticsearchClient(ElasticClient(ElasticProperties(ElasticsearchPulseActor.elasticsearchUrl())))
+  private lazy val esClient = new ElasticsearchClientAdapter(ElasticClient(ElasticProperties(ElasticsearchPulseActor.elasticsearchUrl())))
 
   private def templates(version: Int): List[TemplateDefinition] = {
     def load(name: String) = Source.fromInputStream(getClass.getResourceAsStream(s"$version/$name.json")).mkString.replace("$NAME", indexName)
