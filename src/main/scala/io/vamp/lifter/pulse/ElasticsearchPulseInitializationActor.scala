@@ -10,7 +10,6 @@ import io.vamp.model.resolver.NamespaceValueResolver
 import io.vamp.pulse.ElasticsearchClientAdapter._
 import io.vamp.pulse.{ ElasticsearchClientAdapter, ElasticsearchPulseActor, ElasticsearchPulseEvent }
 
-import scala.collection.immutable
 import scala.collection.immutable.Seq
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.io.Source
