@@ -7,9 +7,11 @@ import io.vamp.common.NamespaceProvider
 import io.vamp.common.notification.NotificationProvider
 import io.vamp.lifter.pulse.ElasticsearchPulseInitializationActor.TemplateDefinition
 import io.vamp.model.resolver.NamespaceValueResolver
+import io.vamp.pulse.ElasticsearchClientAdapter._
 import io.vamp.pulse.{ ElasticsearchClientAdapter, ElasticsearchPulseActor, ElasticsearchPulseEvent }
 
 import scala.collection.immutable
+import scala.collection.immutable.Seq
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.io.Source
 
@@ -52,9 +54,9 @@ trait ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with
   private def initializeIndex(indexName: String): Future[Any] = esClient.createIndex(indexName)
 
   private def createTemplates(version: Int): Future[Any] = {
-    def createTemplate(definition: TemplateDefinition): Future[ElasticsearchClientAdapter.ElasticsearchCreateTemplateResponse] = esClient.createIndexTemplate(definition.name, definition.template)
+    def createTemplate(definition: TemplateDefinition): Future[ElasticsearchCreateTemplateResponse] = esClient.createIndexTemplate(definition.name, definition.template)
 
-    val createTemplatesResponses: immutable.Seq[Future[ElasticsearchClientAdapter.ElasticsearchCreateTemplateResponse]] = templates(version)
+    val createTemplatesResponses: Seq[Future[ElasticsearchCreateTemplateResponse]] = templates(version)
       .filter(definition ⇒ Await.result(esClient.templateExists(definition.name), timeout.duration))
       .map(createTemplate)
 
