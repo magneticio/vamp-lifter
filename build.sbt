@@ -42,9 +42,7 @@ val sql = Seq("org.postgresql" % "postgresql" % "9.4-1202-jdbc42",
 val fp = "org.typelevel" %% "cats" % "0.9.0" ::
   "com.chuusai" %% "shapeless" % "2.3.2" :: Nil
 
-val elastic4sVersion = "6.5.1"
-val elastic4s = "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion ::
-  "com.sksamuel.elastic4s" %% "elastic4s-core" % elastic4sVersion :: Nil
+val elastic4s = "com.sksamuel.elastic4s" %% "elastic4s-http" % "6.5.1" :: Nil
 
 val config = "com.typesafe" % "config" % "1.3.1" :: Nil
 
