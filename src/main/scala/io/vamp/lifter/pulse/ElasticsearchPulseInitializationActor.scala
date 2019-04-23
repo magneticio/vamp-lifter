@@ -62,7 +62,7 @@ trait ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with
   private def createTemplates(version: Int): Future[Any] = {
     val createTemplatesResponses: Seq[Future[ElasticsearchCreateTemplateResponse]] = templates(version)
       .filter(definition ⇒ Await.result(esClient.templateExists(definition.name), timeout.duration))
-      .map(definition => esClient.createIndexTemplate(definition.name, definition.pattern, definition.order, definition.mappings))
+      .map(definition ⇒ esClient.createIndexTemplate(definition.name, definition.pattern, definition.order, definition.mappings))
 
     Future.sequence(createTemplatesResponses)
   }
