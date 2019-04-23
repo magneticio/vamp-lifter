@@ -2,7 +2,8 @@ package io.vamp.lifter.pulse
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.sksamuel.elastic4s.http.{ ElasticClient, ElasticProperties }
+import com.sksamuel.elastic4s.http.{ ElasticClient, ElasticDsl, ElasticProperties }
+import com.sksamuel.elastic4s.mappings.MappingDefinition
 import io.vamp.common.NamespaceProvider
 import io.vamp.common.notification.NotificationProvider
 import io.vamp.lifter.pulse.ElasticsearchPulseInitializationActor.TemplateDefinition
@@ -16,7 +17,7 @@ import scala.io.Source
 
 object ElasticsearchPulseInitializationActor {
 
-  case class TemplateDefinition(name: String, template: String)
+  case class TemplateDefinition(name: String, pattern: String, mappings: Seq[MappingDefinition], order: Int)
 
 }
 
@@ -32,9 +33,15 @@ trait ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with
   private lazy val esClient = new ElasticsearchClientAdapter(ElasticClient(ElasticProperties(ElasticsearchPulseActor.elasticsearchUrl())))
 
   private def templates(version: Int): List[TemplateDefinition] = {
-    def load(name: String) = Source.fromInputStream(getClass.getResourceAsStream(s"$version/$name.json")).mkString.replace("$NAME", indexName)
+    def loadMappings(name: String) = {
+      val mapping = Source.fromInputStream(getClass.getResourceAsStream(s"$version/$name.json")).mkString
+      Seq(ElasticDsl.mapping("_default_").rawSource(mapping))
+    }
 
-    List("template", "template-event").map(template ⇒ TemplateDefinition(s"$indexName-$template", load(template)))
+    List(
+      TemplateDefinition(name = s"$indexName-template", pattern = s"$indexName-*", mappings = loadMappings("template"), order = 1),
+      TemplateDefinition(name = s"$indexName-template-event", pattern = s"$indexName-*", mappings = loadMappings("template-event"), order = 2)
+    )
   }
 
   override lazy val indexTimeFormat: Map[String, String] = Map()
@@ -53,11 +60,9 @@ trait ElasticsearchPulseInitializationActor extends ElasticsearchPulseEvent with
   private def initializeIndex(indexName: String): Future[Any] = esClient.createIndex(indexName)
 
   private def createTemplates(version: Int): Future[Any] = {
-    def createTemplate(definition: TemplateDefinition): Future[ElasticsearchCreateTemplateResponse] = esClient.createIndexTemplate(definition.name, definition.template)
-
     val createTemplatesResponses: Seq[Future[ElasticsearchCreateTemplateResponse]] = templates(version)
       .filter(definition ⇒ Await.result(esClient.templateExists(definition.name), timeout.duration))
-      .map(createTemplate)
+      .map(definition => esClient.createIndexTemplate(definition.name, definition.pattern, definition.order, definition.mappings))
 
     Future.sequence(createTemplatesResponses)
   }
