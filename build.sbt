@@ -34,15 +34,15 @@ val logging = "org.slf4j" % "slf4j-api" % "1.7.21" ::
   "ch.qos.logback" % "logback-classic" % "1.1.7" ::
   ("com.typesafe.scala-logging" %% "scala-logging" % "3.5.0" exclude("org.slf4j", "slf4j-api")) :: Nil
 
-val sql = "org.postgresql" % "postgresql" % "9.4-1202-jdbc42" ::
-  "mysql" % "mysql-connector-java" % "6.0.6" ::
-  "com.microsoft.sqlserver" % "mssql-jdbc" % "6.1.0.jre8" ::
-  "org.xerial" % "sqlite-jdbc" % "3.19.3" :: Nil
+val sql = Seq("org.postgresql" % "postgresql" % "9.4-1202-jdbc42",
+  "mysql" % "mysql-connector-java" % "6.0.6",
+  "com.microsoft.sqlserver" % "mssql-jdbc" % "6.1.0.jre8" exclude("org.apache.httpcomponents", "httpclient"),
+  "org.xerial" % "sqlite-jdbc" % "3.19.3")
 
 val fp = "org.typelevel" %% "cats" % "0.9.0" ::
   "com.chuusai" %% "shapeless" % "2.3.2" :: Nil
 
-val elastic4s = Seq("com.sksamuel.elastic4s" %% "elastic4s-http" % "6.5.1" exclude("org.apache.httpcomponents", "httpclient"))
+val elastic4s = "com.sksamuel.elastic4s" %% "elastic4s-http" % "6.5.1" :: Nil
 
 val config = "com.typesafe" % "config" % "1.3.1" :: Nil
 
