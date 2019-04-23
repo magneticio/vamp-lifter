@@ -42,7 +42,7 @@ val sql = "org.postgresql" % "postgresql" % "9.4-1202-jdbc42" ::
 val fp = "org.typelevel" %% "cats" % "0.9.0" ::
   "com.chuusai" %% "shapeless" % "2.3.2" :: Nil
 
-val elastic4s = "com.sksamuel.elastic4s" %% "elastic4s-http" % "6.5.1" :: Nil
+val elastic4s = Seq("com.sksamuel.elastic4s" %% "elastic4s-http" % "6.5.1" exclude("org.apache.httpcomponents", "httpclient"))
 
 val config = "com.typesafe" % "config" % "1.3.1" :: Nil
 
