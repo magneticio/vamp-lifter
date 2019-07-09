@@ -20,11 +20,11 @@ scalariformSettings ++ Seq(ScalariformKeys.preferences := ScalariformKeys.prefer
   .setPreference(RewriteArrowSymbols, true))
 
 // Libraries
-val akka = "com.typesafe.akka" %% "akka-stream" % "2.5.23" ::
-  "com.typesafe.akka" %% "akka-actor" % "2.5.23" ::
-  "com.typesafe.akka" %% "akka-http" % "10.1.8" ::
-  "com.typesafe.akka" %% "akka-parsing" % "10.1.8" ::
-  ("com.typesafe.akka" %% "akka-slf4j" % "2.5.23" exclude("org.slf4j", "slf4j-api")) :: Nil
+val akka = "com.typesafe.akka" %% "akka-stream" % "2.5.9" ::
+  "com.typesafe.akka" %% "akka-actor" % "2.5.9" ::
+  "com.typesafe.akka" %% "akka-http" % "10.0.11" ::
+  "com.typesafe.akka" %% "akka-parsing" % "10.0.11" ::
+  ("com.typesafe.akka" %% "akka-slf4j" % "2.5.9" exclude("org.slf4j", "slf4j-api")) :: Nil
 
 val bouncyCastle =
   "org.bouncycastle" % "bcprov-jdk15on" % "1.61" ::
