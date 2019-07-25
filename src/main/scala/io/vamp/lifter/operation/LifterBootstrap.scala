@@ -104,9 +104,10 @@ trait VampInitialization {
   }
 
   protected def setupPulse(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
-    if (mapping.getOrElse("pulse", false).asInstanceOf[Boolean])
-      IoC.actorFor[PulseInitializationActor] ? PulseInitializationActor.Initialize
-    else Future.successful(true)
+//    if (mapping.getOrElse("pulse", false).asInstanceOf[Boolean])
+//      IoC.actorFor[PulseInitializationActor] ? PulseInitializationActor.Initialize
+//    else Future.successful(true)
+    Future.successful(true)
   }
 
   protected def setupArtifacts(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
