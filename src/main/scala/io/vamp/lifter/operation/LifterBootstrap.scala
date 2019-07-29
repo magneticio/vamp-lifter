@@ -79,14 +79,12 @@ trait VampInitialization {
   protected def template()(implicit namespace: Namespace): Map[String, Any] = Map(
     "key_value" → true,
     "persistence" → true,
-    "pulse" → true,
     "artifacts" → Config.stringList("vamp.lifter.artifacts")().map(artifact ⇒ artifact → true).toMap
   )
 
   protected def setup(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = for {
     _ ← setupKvStore(mapping)
     _ ← setupPersistence(mapping)
-    _ ← setupPulse(mapping)
     _ ← setupArtifacts(mapping)
   } yield mapping
 
@@ -100,10 +98,6 @@ trait VampInitialization {
     if (mapping.getOrElse("persistence", false).asInstanceOf[Boolean])
       IoC.actorFor[PersistenceInitializationActor] ? PersistenceInitializationActor.Initialize
     else Future.successful(true)
-  }
-
-  protected def setupPulse(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
-    Future.successful(true)
   }
 
   protected def setupArtifacts(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
