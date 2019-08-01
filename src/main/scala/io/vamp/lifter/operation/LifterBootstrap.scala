@@ -9,7 +9,6 @@ import io.vamp.common.{ Config, Namespace }
 import io.vamp.lifter.artifact.ArtifactInitializationActor
 import io.vamp.lifter.persistence.SqlInterpreter.SqlInterpreter
 import io.vamp.lifter.persistence.{ PersistenceInitializationActor, SqlInterpreter, SqlPersistenceInitializationActor }
-import io.vamp.lifter.pulse.PulseInitializationActor
 import io.vamp.persistence.PersistenceActor
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -34,7 +33,7 @@ class LifterBootstrap(implicit override val actorSystem: ActorSystem, val namesp
     }
 
     Future.sequence(
-      IoC.createActor[PulseInitializationActor] :: IoC.createActor[ArtifactInitializationActor] :: dbActor
+      IoC.createActor[ArtifactInitializationActor] :: dbActor
     ).map { list ⇒
         if (initialize) execute()
         list
@@ -80,14 +79,12 @@ trait VampInitialization {
   protected def template()(implicit namespace: Namespace): Map[String, Any] = Map(
     "key_value" → true,
     "persistence" → true,
-    "pulse" → true,
     "artifacts" → Config.stringList("vamp.lifter.artifacts")().map(artifact ⇒ artifact → true).toMap
   )
 
   protected def setup(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = for {
     _ ← setupKvStore(mapping)
     _ ← setupPersistence(mapping)
-    _ ← setupPulse(mapping)
     _ ← setupArtifacts(mapping)
   } yield mapping
 
@@ -100,12 +97,6 @@ trait VampInitialization {
   protected def setupPersistence(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
     if (mapping.getOrElse("persistence", false).asInstanceOf[Boolean])
       IoC.actorFor[PersistenceInitializationActor] ? PersistenceInitializationActor.Initialize
-    else Future.successful(true)
-  }
-
-  protected def setupPulse(mapping: Map[String, Any])(implicit namespace: Namespace): Future[Any] = {
-    if (mapping.getOrElse("pulse", false).asInstanceOf[Boolean])
-      IoC.actorFor[PulseInitializationActor] ? PulseInitializationActor.Initialize
     else Future.successful(true)
   }
 
